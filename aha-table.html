@@ -298,14 +298,23 @@
           Polymer.dom(this.root).querySelector('#scrollBodyTableContainer');
         }
       },
+      /**
+       * Property to enable server side sorting, filtering, pagination
+       *
+       * @default false
+       */
+      disableClientTable: {
+        type: Boolean,
+        value: false
+      }
     },
 
     observers: [
-      '_updateDisplayedRows(firstItemIndex)', // when the first item to display changes
-      '_updateDisplayedRows(pageSize)', // when the size of the page changes
+      '_paginationChange(pageSize, firstItemIndex)',
       '_dataChanged(data.*)',
       '_columnChooserChanged(_columnChooserItems.*)',
-      '_computeIfColumnFilterEnabled(meta.splices, filterable, meta.*, selectable)'
+      '_computeIfColumnFilterEnabled(meta.splices, filterable, meta.*, selectable)',
+      '_stateChanged(pageSize, firstItemIndex, sortedColumn, descending)'
     ],
 
     ready: function() {
@@ -316,6 +325,24 @@
     },
     attached: function() {
       this._isAttached = true;
+    },
+
+    _stateChanged: function(pageSize, firstItemIndex, sortedColumn, descending){
+      var self = this;
+      this.debounce('aha-table-state-changed', function(){
+        self.fire('table-state-changed', {
+          pageSize: pageSize,
+          firstItemIndex: firstItemIndex,
+          sortedColumn: sortedColumn,
+          descending: descending
+        });
+      },10);
+    },
+
+    _paginationChange: function(){
+      if (!this.disableClientTable){
+        this._updateDisplayedRows();
+      }
     },
 
     _columnChanged: function(info){
@@ -554,15 +581,17 @@
         this._setInternalDataAt(this._internalData[i], '_filtered', false);
       }
 
-      // sort
-      if(this.sortedColumn) {
-        this.filteredSortedData = this._sortByColumn(this.filteredSortedData);
-      }
+      if (!this.disableClientTable){
+        // sort
+        if(this.sortedColumn) {
+          this.filteredSortedData = this._sortByColumn(this.filteredSortedData);
+        }
 
-      // filter
-      for(index in this.filteredColumns) {
-        this.filteredSortedData = this._filterByColumn(this.filteredColumns[index].name,
-          this.filteredColumns[index].userEntry, this.filteredSortedData);
+        // filter
+        for(index in this.filteredColumns) {
+          this.filteredSortedData = this._filterByColumn(this.filteredColumns[index].name,
+                  this.filteredColumns[index].userEntry, this.filteredSortedData);
+        }
       }
 
       // count total number of rows
@@ -659,9 +688,13 @@
     _updateDisplayedRows: function() {
       var fromPage,
           to;
-      if(this.firstItemIndex !== null && this.firstItemIndex !== undefined &&
-        this.pageSize !== null && this.pageSize !== undefined &&
-        this.filteredSortedData !== undefined && this.filteredSortedData !== null && !this.hidePaginationControl) {
+
+      if (this.disableClientTable){
+        this.set('displayedRows', this.filteredSortedData);
+      }
+      else if(this.firstItemIndex !== null && this.firstItemIndex !== undefined &&
+              this.pageSize !== null && this.pageSize !== undefined &&
+              this.filteredSortedData !== undefined && this.filteredSortedData !== null && !this.hidePaginationControl) {
 
         fromPage = this.firstItemIndex - 1; // pagination is 1-based
         to = fromPage + this.pageSize;

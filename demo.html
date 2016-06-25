@@ -25,6 +25,9 @@
 
       <hr>
 
+      <p>Server side sorting, filtering and pagination</p>
+      <px-data-table id="server" table-data="{{data}}" disable-client-table></px-data-table>
+
       <p>Filterable columns and selectable rows.</p>
       <px-data-table filterable selectable table-data="{{data}}"></px-data-table>
 
@@ -134,6 +137,11 @@
       </px-data-table>
 
       <script>
+
+        document.querySelector('#server').addEventListener('table-state-changed', function(e){
+          //ajax call to get the data with new pagination
+          console.log('table state change event received', e.detail);
+        });
 
         window.myTableCustomFunctions = {
           sortByEmailDomain: function(a, b) {

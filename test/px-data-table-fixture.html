@@ -118,6 +118,10 @@
           </template>
         </px-data-table>
       </template>
+
+      <p>Server table</p>
+      <px-data-table id="server" disable-client-table table-data="{{minidata}}"></px-data-table>
+
       <script>
         var app = document.querySelector('#app');
         app.meta = [{name: 'first'}, {name: 'last'}, {name: 'email'}];

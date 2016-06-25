@@ -1218,5 +1218,37 @@ function runTests() {
           done();
         });
       });
+
     });
+
+    suite('disable client table test',function(){
+      test ('should not sort',function(){
+        var fixture = document.querySelector('#server');
+        var firstNameHeaderSelector = '.aha-first-th > div > span';
+        var firstNameHeader = fixture.querySelector(firstNameHeaderSelector);
+        firstNameHeader.addEventListener('click', function(e){
+          setTimeout(function() {
+            var tb = Polymer.dom(fixture.root).querySelector('aha-table'),
+            lastNameRow = Polymer.dom(tb.root).querySelectorAll('.aha-last-td');
+            assert.include(lastNameRow[0].textContent, 'Meyer');
+            done(); // end the test
+          }, 0);
+        });
+        // Trigger a click on the First Name column header
+        firstNameHeader.click();
+
+
+
+
+
+      });
+
+      test ('should not paginate',function(){
+
+      });
+
+      test('should emit table state changed event',function(){
+
+      });
+  });
 }

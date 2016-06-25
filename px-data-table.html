@@ -85,8 +85,9 @@ Events:
                  show-column-chooser="{{showColumnChooser}}"
                  enable-column-reorder="{{enableColumnReorder}}"
                  enable-column-resize="{{enableColumnResize}}"
+                 disable-client-table="{{disableClientTable}}"
                  id="dataTable">
-                 <content></content>
+        <content></content>
       </aha-table>
     </div>
   </template>
@@ -239,7 +240,7 @@ Events:
        */
       enableColumnReorder: {
         type: Boolean,
-        value:false
+        value: false
       },
       /**
        * Property to enable resizing of column headers through click and drag on
@@ -252,9 +253,17 @@ Events:
       enableColumnResize: {
         type: Boolean,
         value: false
+      },
+      /**
+       * Property to enable server side sorting, filtering, pagination
+       *
+       * @default false
+       */
+      disableClientTable: {
+        type: Boolean,
+        value: false
       }
-    },
-
+    }
     /**
      * Events:
      *

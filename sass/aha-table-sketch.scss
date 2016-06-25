@@ -75,7 +75,7 @@ $inuit-enable-btn--disabled: true;
 }
 
 .tr {
-  @extend tr;
+  @extend tr !optional;
   display: table-row;
 }
 
