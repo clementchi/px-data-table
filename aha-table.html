@@ -314,7 +314,7 @@
       '_dataChanged(data.*)',
       '_columnChooserChanged(_columnChooserItems.*)',
       '_computeIfColumnFilterEnabled(meta.splices, filterable, meta.*, selectable)',
-      '_stateChanged(pageSize, firstItemIndex, sortedColumn, descending)'
+      '_stateChanged(pageSize, firstItemIndex, sortedColumn, descending, filteredColumns.*)'
     ],
 
     ready: function() {
@@ -327,14 +327,15 @@
       this._isAttached = true;
     },
 
-    _stateChanged: function(pageSize, firstItemIndex, sortedColumn, descending){
+    _stateChanged: function(pageSize, firstItemIndex, sortedColumn, descending, filteredColumns){
       var self = this;
       this.debounce('aha-table-state-changed', function(){
         self.fire('table-state-changed', {
           pageSize: pageSize,
           firstItemIndex: firstItemIndex,
           sortedColumn: sortedColumn,
-          descending: descending
+          descending: descending,
+          filteredColumns: filteredColumns
         });
       },10);
     },
@@ -865,18 +866,21 @@
             isNotInFilteredColumnsList = false;
             if(userEntry === "" || userEntry === undefined || userEntry === null) {
               // don't filter on this column anymore
-              this.filteredColumns.splice(index, 1);
+              this.splice('filteredColumns',index, 1);
             }
             else {
               // update the user entry with the latest content
-              filteredColumn.userEntry = userEntry;
+              var self = this;
+              this.debounce('filter_key_down', function(){
+                self.set('filteredColumns.'+index+'.userEntry', userEntry);
+              }, 500);
             }
 
           }
         }
         if(isNotInFilteredColumnsList) {
           // add the new column to the filtered list
-          this.filteredColumns.push({"name": column.name, "userEntry": userEntry});
+          this.push('filteredColumns', {"name": column.name, "userEntry": userEntry});
         }
         this._filterSortAndUpdateDisplayedTable();
       }
