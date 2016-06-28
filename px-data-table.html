@@ -86,6 +86,8 @@ Events:
                  enable-column-reorder="{{enableColumnReorder}}"
                  enable-column-resize="{{enableColumnResize}}"
                  disable-client-table="{{disableClientTable}}"
+                 total-rows-in-server="{{totalRowsInServer}}"
+                 initial-table-state="{{initialTableState}}"
                  id="dataTable">
         <content></content>
       </aha-table>
@@ -224,9 +226,6 @@ Events:
       /**
        * Property to set the visibility of the table column chooser (allowing
        * the user to show and hide columns)
-       *
-       *
-       *
        */
       showColumnChooser: {
         type: Boolean,
@@ -262,6 +261,17 @@ Events:
       disableClientTable: {
         type: Boolean,
         value: false
+      },
+      /**
+       * Property to set initial state
+       * pageSize - number of record per page
+       * totalRowsInServer - total number of records in server
+       * firstItemIndex - server record offset
+       * sortedColumn - sorted column
+       * descending - sort order
+       */
+      initialTableState: {
+        type: Object
       }
     }
     /**

@@ -306,7 +306,20 @@
       disableClientTable: {
         type: Boolean,
         value: false
+      },
+      /**
+       * Property to set initial state
+       * pageSize - number of record per page
+       * totalRowsInServer - total number of records in server
+       * firstItemIndex - server record offset
+       * sortedColumn - sorted column
+       * descending - sort order
+       */
+      initialTableState: {
+        type: Object,
+        observer: '_initialTableStateChanged'
       }
+
     },
 
     observers: [
@@ -325,6 +338,20 @@
     },
     attached: function() {
       this._isAttached = true;
+    },
+
+    /**
+     * Set initial table state when disableClientTable flag is used
+     */
+    _initialTableStateChanged: function(value){
+      if (this.disableClientTable){
+        console.log('setting initial table State', value);
+        this.set('numberOfItems', value.totalRowsInServer);
+        this.$.pagination.set('pageSize', value.pageSize);
+        this.$.pagination.goToPageNumber(Math.ceil(value.firstItemIndex/value.pageSize));
+        this.set('sortedColumn', value.sortedColumn);
+        this.set('descending', value.descending);
+      }
     },
 
     _stateChanged: function(pageSize, firstItemIndex, sortedColumn, descending, filteredColumns){
@@ -593,19 +620,20 @@
           this.filteredSortedData = this._filterByColumn(this.filteredColumns[index].name,
                   this.filteredColumns[index].userEntry, this.filteredSortedData);
         }
+
+        // count total number of rows
+        self = this;
+        this._internalData.forEach(function(row) {
+          if(!self._getInternalCellStateAt(row, '_filtered')) {
+            count++;
+          }
+        });
+
+        this.set('numberOfItems', count);
+
+        // with filtering/sorting, it's best just to go back to the first page
+        this.$.pagination.goToPageNumber(1);
       }
-
-      // count total number of rows
-      self = this;
-      this._internalData.forEach(function(row) {
-        if(!self._getInternalCellStateAt(row, '_filtered')) {
-          count++;
-        }
-      });
-      this.set('numberOfItems', count);
-
-      // with filtering/sorting, it's best just to go back to the first page
-      this.$.pagination.goToPageNumber(1);
       this._updateDisplayedRows();
     },
 

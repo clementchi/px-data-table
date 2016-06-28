@@ -17,10 +17,11 @@ Element that provides pagination.
 			<span class="pagesize">
 				<span class="u-mr--">{{pagesizetitle}}</span>
 				<select id="pageSizeSelect" on-change="_changeDropDown">
-          <option selected>10</option>
-          <option>20</option>
-          <option>50</option>
-          <option>100</option>
+          <template is="dom-repeat" items="{{pageSizeList}}">
+            <option value='{{item}}' selected$='[[_computeSelectedPageSize(item,pageSize)]]'>
+            {{item}}
+            </option>
+          </template>
         </select>
 			</span>
 
@@ -59,8 +60,7 @@ Element that provides pagination.
       numberOfItems: {
         type: Number,
         notify: true,
-        observer: '_goBackToFirstPage',
-
+        observer: '_goBackToFirstPage'
       },
 
       /**
@@ -72,7 +72,7 @@ Element that provides pagination.
         type: Number,
         value: 10,
         notify: true,
-        readOnly: true
+        observer: '_pageSizeChanged'
       },
 
       /**
@@ -84,9 +84,16 @@ Element that provides pagination.
        */
       firstItemIndexToDisplay: {
         type: Number,
-        notify: true,
         value: 1,
+        notify: true,
         readOnly: true
+      },
+
+      pageSizeList: {
+        type: Array,
+        value: function(){
+          return [10, 20, 50, 100];
+        }
       }
 
     },
@@ -94,6 +101,14 @@ Element that provides pagination.
     ready: function() {
       this.set('itemoftext', 'of');
       this.set('pagesizetitle', 'Rows per page');
+    },
+
+    _computeSelectedPageSize: function(item, details){
+      return item === details;
+    },
+
+    _pageSizeChanged: function(){
+      this.set('pageSize', this.pageSize);
     },
 
     _goBackToFirstPage: function() {
@@ -136,22 +151,8 @@ Element that provides pagination.
     },
 
     _changeDropDown: function(e) {
-      var sizelist = [10, 20, 50, 100];
-      var size = parseInt(e.target.value),
-        index = sizelist.indexOf(size);
-      var parentElem = this.$.pageSizeSelect,
-        optionList = Polymer.dom(parentElem).querySelectorAll("option");
-
-      optionList.forEach(function(option) {
-        if(parseInt(option.value) === parseInt(size)) {
-          option.setAttribute('selected', '');
-          e.target.selectedIndex = parseInt(index);
-        } else {
-          option.removeAttribute('selected');
-        }
-      });
-
-      this._setPageSize(size);
+      var size = parseInt(e.target.value);
+      this.set('pageSize', size);
       this._goBackToFirstPage();
     },
 
