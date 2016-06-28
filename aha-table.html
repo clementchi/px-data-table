@@ -58,8 +58,7 @@
                 <!-- select all checkbox -->
                 <template is="dom-if" if="{{_isSelectAllColumn(column)}}">
                   <span class="flex flex--center">
-                    <input id="selectAllCheckbox" type="checkbox"
-                           on-change="_clickSelectAll"/>
+                    <input id="selectAllCheckbox" type="checkbox" on-change="_clickSelectAll"/>
                   </span>
                 </template>
 
@@ -303,7 +302,7 @@
        *
        * @default false
        */
-      disableClientTable: {
+      serverTable: {
         type: Boolean,
         value: false
       },
@@ -322,16 +321,20 @@
       initialTableState: {
         type: Object,
         observer: '_initialTableStateChanged'
+      },
+      _isSelectedAll: {
+        type: Boolean,
+        value: true
       }
 
     },
 
     observers: [
-      '_paginationChange(pageSize, firstItemIndex)',
+      '_paginationChanged(pageSize, firstItemIndex)',
       '_dataChanged(data.*)',
       '_columnChooserChanged(_columnChooserItems.*)',
       '_computeIfColumnFilterEnabled(meta.splices, filterable, meta.*, selectable)',
-      '_stateChanged(pageSize, firstItemIndex, sortedColumn, descending, filteredColumns.*)'
+      '_sortedColumnAndFilterChanged(sortedColumn, descending, filteredColumns.*)'
     ],
 
     ready: function() {
@@ -345,10 +348,10 @@
     },
 
     /**
-     * Set initial table state when disableClientTable flag is used
+     * Set initial table state when serverTable flag is used
      */
     _initialTableStateChanged: function(value){
-      if (this.disableClientTable){
+      if (this.serverTable){
         console.log('setting initial table State', value);
         this.$.pagination.set('pageSize', value.pageSize);
         this.$.pagination.goToPageNumber(Math.ceil(value.firstItemIndex/value.pageSize));
@@ -362,12 +365,12 @@
       this.set('numberOfItems', rows);
     },
 
-    _stateChanged: function(pageSize, firstItemIndex, sortedColumn, descending, filteredColumns){
+    _fireTableStateChangedEvent: function(pageSize, firstItemIndex, sortedColumn, descending, filteredColumns){
       var self = this;
       this.debounce('aha-table-state-changed', function(){
-        self.fire('table-state-changed', {
+        this.fire('px-data-table-state-changed', {
           pageSize: pageSize,
-          firstItemIndex: firstItemIndex,
+          firstItemIndex: firstItemIndex, //always default to the 1st page when pageSize, sortedColumn, descending and filteredColumn change
           sortedColumn: sortedColumn,
           descending: descending,
           filteredColumns: filteredColumns
@@ -375,9 +378,17 @@
       },10);
     },
 
-    _paginationChange: function(){
-      if (!this.disableClientTable){
+    _sortedColumnAndFilterChanged: function(sortedColumn, descending, filteredColumns){
+      var self = this;
+      this._fireTableStateChangedEvent(this.pageSize, 1, sortedColumn, descending, filteredColumns)
+    },
+
+    _paginationChanged: function(pageSize, firstItemIndex){
+      if (!this.serverTable){
         this._updateDisplayedRows();
+      }
+      else {
+        this._fireTableStateChangedEvent(pageSize, firstItemIndex, this.sortedColumn, this.descending, this.filteredColumns);
       }
     },
 
@@ -521,7 +532,10 @@
       if(typeof this._internalData !== "undefined" && this._internalData.length === 0){
         this._internalData = this._initializeInternalData();
       } else{
-        this._internalData = this._refreshInternalData(this.disableClientTable);
+        this._internalData = this._refreshInternalData(this.serverTable);
+        if (this.serverTable){
+          this._setAllRows(false);
+        }
       }
       this._filterSortAndUpdateDisplayedTable();
 
@@ -617,7 +631,7 @@
         this._setInternalDataAt(this._internalData[i], '_filtered', false);
       }
 
-      if (!this.disableClientTable){
+      if (!this.serverTable){
         // sort
         if(this.sortedColumn) {
           this.filteredSortedData = this._sortByColumn(this.filteredSortedData);
@@ -648,6 +662,7 @@
     /********** Internal data structure ***********/
 
     _refreshInternalData: function(resetDataState){
+
       var _internalData = [],
           i,
           len;
@@ -726,7 +741,7 @@
       var fromPage,
           to;
 
-      if (this.disableClientTable){
+      if (this.serverTable){
         this.set('displayedRows', this.filteredSortedData);
       }
       else if(this.firstItemIndex !== null && this.firstItemIndex !== undefined &&
@@ -1009,16 +1024,18 @@
     _clickRow: function(evt) {
       var column = evt.model.column,
           row = evt.model.internalRow,
-          detail = {"row": row, "column": column},
-          selectAllCheckbox;
+          detail = {"row": row, "column": column};
       this.fire('px-row-click', detail); // fire the event after it is marked selected
 
       if(this.selectable) {
         this._selectRow(row, this.$.recordList.indexForElement(evt.currentTarget));
 
-        // always just make sure selectAll checkbox is unchecked when 1 row is clicked
-        selectAllCheckbox = Polymer.dom(this.root).querySelector("#selectAllCheckbox");
-        selectAllCheckbox.checked = false;
+        if (this._internalData.length && this.selectedRows.length === this._internalData.length) {
+          this._setSelectAllCheckbox(true);
+        }
+        else {
+          this._setSelectAllCheckbox(false);
+        }
 
         // if sorted row is selected, then it is no longer selected
         if(this.sortedColumn === '_selected') {
@@ -1042,6 +1059,13 @@
       }
     },
 
+    _setSelectAllCheckbox: function(isSelectedAll) {
+      var selectAllCheckbox;
+      // always just make sure selectAll checkbox is unchecked when 1 row is clicked
+      selectAllCheckbox = Polymer.dom(this.root).querySelector("#selectAllCheckbox");
+      selectAllCheckbox? selectAllCheckbox.checked = isSelectedAll : '';
+    },
+
     _setAllRows: function(isSelected) {
       var i,
           len;
@@ -1063,8 +1087,12 @@
           this.push('selectedRows', this._internalData[i]);
         }
       }
+      else {
+        this._setSelectAllCheckbox(false);
+      }
 
       this.set('meta.0.label', "Selected (" + this.selectedRows.length+ ")");
+
       this.fire('px-select-all-click', this.selectedRows);
 
     },
@@ -1082,6 +1110,7 @@
         this.push('selectedRows', row);
       }
       this.set('meta.0.label', "Selected (" + this.selectedRows.length+ ")");
+
       this.fire('after-select', row);
     },
 

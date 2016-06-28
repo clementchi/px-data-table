@@ -84,7 +84,7 @@ Events:
                  show-column-chooser="{{showColumnChooser}}"
                  enable-column-reorder="{{enableColumnReorder}}"
                  enable-column-resize="{{enableColumnResize}}"
-                 disable-client-table="{{disableClientTable}}"
+                 server-table="{{serverTable}}"
                  total-rows-in-server="{{totalRowsInServer}}"
                  initial-table-state="{{initialTableState}}"
                  id="dataTable">
@@ -258,7 +258,7 @@ Events:
        *
        * @default false
        */
-      disableClientTable: {
+      serverTable: {
         type: Boolean,
         value: false
       },
