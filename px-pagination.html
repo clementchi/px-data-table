@@ -60,7 +60,7 @@ Element that provides pagination.
       numberOfItems: {
         type: Number,
         notify: true,
-        observer: '_goBackToFirstPage'
+        observer: '_numberOfItemsChanged'
       },
 
       /**
@@ -109,6 +109,10 @@ Element that provides pagination.
 
     _pageSizeChanged: function(){
       this.set('pageSize', this.pageSize);
+    },
+
+    _numberOfItemsChanged: function(){
+      this.set('pageCount', Math.ceil(this.numberOfItems / this.pageSize));
     },
 
     _goBackToFirstPage: function() {

@@ -73,8 +73,7 @@ Events:
 
   <template>
     <div class="flex">
-      <aha-table data="{{tableData}}"
-                 filterable="{{filterable}}"
+      <aha-table filterable="{{filterable}}"
                  striped="{{striped}}"
                  table-columns="{{tableColumns}}"
                  table-rows="{{tableRows}}"
@@ -130,7 +129,8 @@ Events:
         value: function() {
           return [];
         },
-        notify: true
+        notify: true,
+        observer: '_tableDataChanged'
       },
 
 
@@ -262,10 +262,12 @@ Events:
         type: Boolean,
         value: false
       },
+      totalRowsInServer: {
+        type: Number
+      },
       /**
        * Property to set initial state
        * pageSize - number of record per page
-       * totalRowsInServer - total number of records in server
        * firstItemIndex - server record offset
        * sortedColumn - sorted column
        * descending - sort order
@@ -273,6 +275,9 @@ Events:
       initialTableState: {
         type: Object
       }
+    },
+    _tableDataChanged: function(changeRecord){
+      this.$.dataTable.set('data',this.tableData);
     }
     /**
      * Events:

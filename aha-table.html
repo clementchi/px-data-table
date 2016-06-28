@@ -307,6 +307,10 @@
         type: Boolean,
         value: false
       },
+      totalRowsInServer: {
+        type: Number,
+        observer: '_totalRowsInServerChanged'
+      },
       /**
        * Property to set initial state
        * pageSize - number of record per page
@@ -346,12 +350,16 @@
     _initialTableStateChanged: function(value){
       if (this.disableClientTable){
         console.log('setting initial table State', value);
-        this.set('numberOfItems', value.totalRowsInServer);
         this.$.pagination.set('pageSize', value.pageSize);
         this.$.pagination.goToPageNumber(Math.ceil(value.firstItemIndex/value.pageSize));
         this.set('sortedColumn', value.sortedColumn);
         this.set('descending', value.descending);
       }
+    },
+
+    _totalRowsInServerChanged: function(rows) {
+      this.$.pagination.goToPageNumber(Math.ceil(this.firstItemIndex/this.pageSize));
+      this.set('numberOfItems', rows);
     },
 
     _stateChanged: function(pageSize, firstItemIndex, sortedColumn, descending, filteredColumns){
@@ -513,7 +521,7 @@
       if(typeof this._internalData !== "undefined" && this._internalData.length === 0){
         this._internalData = this._initializeInternalData();
       } else{
-        this._internalData = this._refreshInternalData();
+        this._internalData = this._refreshInternalData(this.disableClientTable);
       }
       this._filterSortAndUpdateDisplayedTable();
 
