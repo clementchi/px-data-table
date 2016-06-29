@@ -1,4 +1,4 @@
-var table1Fixture, table2Fixture, table3Fixture, table4Fixture, table5Fixture, table6Fixture, dropdownFixture, filtertest;
+var table1Fixture, table2Fixture, table3Fixture, table4Fixture, table5Fixture, table6Fixture, dropdownFixture, filtertest, serverTest;
 var getStyle = function (el, style){
   return window.getComputedStyle( el, null ).getPropertyValue( style );
 };
@@ -697,6 +697,10 @@ document.addEventListener("WebComponentsReady", function() {
   filtertest = document.getElementById('filtertest');
   filtertest.tableData = minidata;
 
+  serverTest = document.getElementById('server');
+  serverTest.tableData = data;
+
+
   runTests();
 });
 
@@ -724,6 +728,11 @@ function runTests() {
     test('myTable fixture is created', function() {
       assert.isTrue(document.getElementById('myTable') !== null);
     });
+
+    test('server fixture is created', function() {
+      assert.isTrue(document.getElementById('server') !== null);
+    });
+
 
     // Spot checks for correct table structure, cell values and control states
 
@@ -1222,7 +1231,7 @@ function runTests() {
     });
 
     suite('disable client table test',function(){
-      test ('should not sort',function(){
+      test ('should not sort',function(done){
         var fixture = document.querySelector('#server');
         var firstNameHeaderSelector = '.aha-first-th > div > span';
         var firstNameHeader = fixture.querySelector(firstNameHeaderSelector);
@@ -1230,25 +1239,64 @@ function runTests() {
           setTimeout(function() {
             var tb = Polymer.dom(fixture.root).querySelector('aha-table'),
             lastNameRow = Polymer.dom(tb.root).querySelectorAll('.aha-last-td');
-            assert.include(lastNameRow[0].textContent, 'Meyer');
+            //check if the first and the last item are at the same position
+            assert.include(lastNameRow[0].textContent, 'Conrad');
+            assert.include(lastNameRow[9].textContent, 'Duncan');
+            assert.include(lastNameRow[25].textContent, 'Lindsay');
             done(); // end the test
           }, 0);
         });
         // Trigger a click on the First Name column header
         firstNameHeader.click();
+      });
 
+    
+    var serverPagination =document.querySelector('#server #pagination');
+    // Selector for page 3 link
+    var span3Selector = '.paging.style-scope.px-pagination > span > :nth-child(3)';
+      test ('should not paginate',function(done){
+        var fixture = document.querySelector('#server');
+        var serverSpan3 = serverPagination.querySelector(span3Selector);
+        var table = Polymer.dom(fixture.root).querySelector('aha-table'),
+        allLastNameRow = Polymer.dom(table.root).querySelectorAll('.aha-last-td');
+        //before page 3 is clicked, row should be 26
+        assert.equal(allLastNameRow.length, '26');
+        serverSpan3.addEventListener('click', function(e) {
 
-
-
+        //when page 3 is clicked, the row counts should remain the same as 26
+            assert.equal(allLastNameRow.length, '26');
+            // End the test
+            done();
+        });
+        //trigger a click on page 3
+        serverSpan3.click();
 
       });
 
-      test ('should not paginate',function(){
+      test('should emit table state changed event when clicking on page number',function(done){
+
+        document.querySelector('#server').addEventListener('table-state-changed', function(e){
+            console.log('table state change event received', e.detail);
+            // assert.equal(e.detail.firstItemIndex, '11');
+            done();
+        });
+        
+        // Selector for page 2 link
+        var span2Selector = '.paging.style-scope.px-pagination > span > :nth-child(2)';
+        var span2 = serverPagination.querySelector(span2Selector);
+        span2.click();
+
+        debugger;
+
+        var fixture = document.querySelector('#server');
+        var lastNameHeaderSelector = '.aha-email-th > div > span';
+        var lastNameHeader = fixture.querySelector(lastNameHeaderSelector);
+        lastNameHeader.click();
+
+    
 
       });
 
-      test('should emit table state changed event',function(){
 
-      });
   });
 }
