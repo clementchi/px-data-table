@@ -80,11 +80,13 @@
               <template is="dom-if" if="{{_isFalse(column.hide)}}">
                 <!-- selected column checkbox -->
                 <template is="dom-if" if="{{_isEqual(column.type, 'selected')}}">
-                  <span class$="{{_getSelectedCellClass(internalRow._selected, internalRow._highlight)}}" on-click="_clickRow">
-                    <span class="flex flex--center flex--middle">
+                  <span class$="{{_getSelectedCellClass(internalRow._selected, internalRow._highlight)}}">
+                  <template is="dom-if" if="{{internalRow._selectable}}">
+                    <span class="flex flex--center flex--middle" on-click="_clickRow">
                       <input type="checkbox"
                       checked="{{internalRow._selected::change}}"/>
                     </span>
+                  </template>
                   </span>
                 </template>
                 <template id="cellRepeat" is="dom-if" if="{{!_isEqual(column.type, 'selected')}}">
@@ -325,8 +327,13 @@
       _isSelectedAll: {
         type: Boolean,
         value: true
+      },
+      /**
+       * function name to return the row is selectable or not
+       */
+      isSelectableRowFunctionName:{
+        type: String
       }
-
     },
 
     observers: [
@@ -685,7 +692,8 @@
           row: cellDataObj,
           _filtered: (resetDataState ? false : this._internalData[i]._filtered),
           _selected: (resetDataState ? false : this._internalData[i]._selected),
-          _highlight: (resetDataState ? {value:false, highlightColor: ''} : this._internalData[i]._highlight)
+          _highlight: (resetDataState ? {value:false, highlightColor: ''} : this._internalData[i]._highlight),
+          _selectable: this._isRowSelectable(this.selectable, this.data[i])
         });
       }
       return _internalData;
@@ -1009,6 +1017,31 @@
       return formatFunction;
     },
 
+    _isRowSelectable: function(defaultSelectableValue, rowData) {
+      var customSelectableFunction = window,
+      customFunctionFullPath,i;
+
+      // use custom format function if there is one
+      if (this.isSelectableRowFunctionName){
+        var customFunctionFullPath = this.isSelectableRowFunctionName.split(".");
+
+        for(i in customFunctionFullPath) {
+          customSelectableFunction = customSelectableFunction[customFunctionFullPath[i]];
+          if(customSelectableFunction === undefined) {
+            console.warn("px-data-table: Custom function was used, but was not found on window. Is the path correct?");
+            return null;
+          }
+        }
+      }
+
+      if(!customSelectableFunction) {
+        return defaultSelectableValue;
+      }
+      else {
+        return customSelectableFunction(rowData);
+      }
+    },
+
     _save: function(evt) {
       var row = evt.model.internalRow,
           column = evt.model.column,
@@ -1049,8 +1082,11 @@
 
       if(this.selectable) {
         this._selectRow(row, this.$.recordList.indexForElement(evt.currentTarget));
+        var selectableInternalData = this._internalData.filter(function(row){
+          return row._selectable;
+        });
 
-        if (this._internalData.length && this.selectedRows.length === this._internalData.length) {
+        if (selectableInternalData.length && this.selectedRows.length === selectableInternalData.length) {
           this._setSelectAllCheckbox(true);
         }
         else {
@@ -1091,20 +1127,26 @@
           len;
       // set all rows selected/unselected
       for(i = 0, len = this._internalData.length; i < len; i++) {
-        this._setInternalDataAt(this._internalData[i], '_selected', isSelected);
+        if (this._internalData[i]._selectable){
+          this._setInternalDataAt(this._internalData[i], '_selected', isSelected);
+        }
       }
 
       // notify viewing rows of change
       for(i = 0, len = this.displayedRows.length; i < len; i++) {
-        this.notifyPath('displayedRows.' + i + '._selected', this.displayedRows[i]._selected);
-      }
+        if (this.displayedRows[i]._selectable) {
+          this.notifyPath('displayedRows.' + i + '._selected', this.displayedRows[i]._selected);
+         }
+       }
 
       // remove everything from user-facing selectedRows property
       this.splice('selectedRows', 0, this.selectedRows.length);
       if(isSelected) {
         // add everything to selectedRows property
         for(i = 0, len = this._internalData.length; i < len; i++) {
-          this.push('selectedRows', this._internalData[i]);
+          if (this._internalData[i]._selectable) {
+            this.push('selectedRows', this._internalData[i]);
+          }
         }
       }
       else {
