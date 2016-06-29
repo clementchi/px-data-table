@@ -1262,12 +1262,14 @@ function runTests() {
         //before page 3 is clicked, row should be 26
         assert.equal(allLastNameRow.length, '26');
         serverSpan3.addEventListener('click', function(e) {
-
         //when page 3 is clicked, the row counts should remain the same as 26
             assert.equal(allLastNameRow.length, '26');
             // End the test
+            // serverSpan3.removeEventListener('click', function(e) {});
+
             done();
         });
+
         //trigger a click on page 3
         serverSpan3.click();
 
@@ -1276,7 +1278,9 @@ function runTests() {
       test('should emit table state changed event when clicking on page number',function(done){
 
         document.querySelector('#server').addEventListener('table-state-changed', function(e){
+            debugger;
             console.log('table state change event received', e.detail);
+
             // assert.equal(e.detail.firstItemIndex, '11');
             done();
         });
@@ -1286,12 +1290,10 @@ function runTests() {
         var span2 = serverPagination.querySelector(span2Selector);
         span2.click();
 
-        debugger;
-
-        var fixture = document.querySelector('#server');
-        var lastNameHeaderSelector = '.aha-email-th > div > span';
-        var lastNameHeader = fixture.querySelector(lastNameHeaderSelector);
-        lastNameHeader.click();
+        // var fixture = document.querySelector('#server');
+        // var lastNameHeaderSelector = '.aha-email-th > div > span';
+        // var lastNameHeader = fixture.querySelector(lastNameHeaderSelector);
+        // lastNameHeader.click();
 
     
 
