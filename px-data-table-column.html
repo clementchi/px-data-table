@@ -129,6 +129,14 @@ Element that defines a columns in a data table.
       },
 
       /**
+       * Function to format the data before display
+       */
+      formatFunctionName: {
+        type: String,
+        value: ""
+      },
+
+      /**
        * Maximum number of characters in a column.  Optional.
        *
        *      <px-data-table-column max-column-character-width="10" ...></px-data-table-column>
@@ -169,7 +177,8 @@ Element that defines a columns in a data table.
       _highLightElLoadedCount: {
         type: Number,
         value: 0
-      }
+      },
+
     },
     validate: function(value){
       var validationEl = Polymer.dom(this).querySelector('px-validation');

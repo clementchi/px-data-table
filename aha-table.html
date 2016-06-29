@@ -989,6 +989,26 @@
       return (cellValue.toString().toLowerCase().indexOf(searchString.toString().toLowerCase()) > -1);
     },
 
+    /*************** custom formating ******************/
+
+     //TODO: looping meta.forEach for each cell is so in-efficient
+     _getCellFormatFunction: function(columnName) {
+      var formatFunction;
+
+      // use custom format function if there is one
+      this.meta.forEach(function(obj) {
+        if(columnName === obj.name) {
+          formatFunction = this._resolveFunctionOnWindow('format-function-name', obj);
+        }
+      }, this);
+
+      if(!formatFunction) {
+        formatFunction = function (value){return value};
+      }
+
+      return formatFunction;
+    },
+
     _save: function(evt) {
       var row = evt.model.internalRow,
           column = evt.model.column,
@@ -1508,13 +1528,17 @@
         return ""; // return empty string if no data
       }
 
+      //use custom format function if any
+      datum = this._getCellFormatFunction(column.name)(datum);
+
       if(this._shouldClipDatumString(row, column)) {
         return this._clipDatumString(datum, column);
       }
       return datum;
     },
+    //TODO: refactor this because it is using this._getInternalDataAt multiple times
     _shouldClipDatumString: function(row, column) {
-      var datum = this._getInternalDataAt(row, column.name),
+      var datum = this._getCellFormatFunction(column.name)(this._getInternalDataAt(row, column.name));
           maxColWidth = column.maxColumnCharacterWidth;
 
       if(maxColWidth === 0 || datum === null || datum === undefined || typeof datum === 'string' && datum.trim().length === 0) {
