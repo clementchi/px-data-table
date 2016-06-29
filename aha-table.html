@@ -1034,7 +1034,7 @@
         }
       }
 
-      if(!customSelectableFunction) {
+      if(typeof customSelectableFunction !== 'function') {
         return defaultSelectableValue;
       }
       else {
