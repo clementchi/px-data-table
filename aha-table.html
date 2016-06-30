@@ -74,7 +74,7 @@
         <!-- Data rows -->
         <template id="recordList" is="dom-repeat" items="{{displayedRows}}" as="internalRow" strip-whitespace>
 
-          <div class$="{{_getRowClass(internalRow)}}">
+          <div class$="{{_getRowClass(internalRow)}}" on-click="_clickRow">
             <!-- Data cells -->
             <template is="dom-repeat" items="{{meta}}" as="column">
               <template is="dom-if" if="{{_isFalse(column.hide)}}">
@@ -82,7 +82,7 @@
                 <template is="dom-if" if="{{_isEqual(column.type, 'selected')}}">
                   <span class$="{{_getSelectedCellClass(internalRow._selected, internalRow._highlight)}}">
                   <template is="dom-if" if="{{internalRow._selectable}}">
-                    <span class="flex flex--center flex--middle" on-click="_clickRow">
+                    <span class="flex flex--center flex--middle">
                       <input type="checkbox"
                       checked="{{internalRow._selected::change}}"/>
                     </span>
@@ -1081,7 +1081,7 @@
           detail = {"row": row, "column": column};
       this.fire('px-row-click', detail); // fire the event after it is marked selected
 
-      if(this.selectable) {
+      if(this.selectable && row._selectable) {
         this._selectRow(row, this.$.recordList.indexForElement(evt.currentTarget));
         var selectableInternalData = this._internalData.filter(function(row){
           return row._selectable;
