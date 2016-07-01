@@ -1253,12 +1253,14 @@ function runTests() {
     
     var serverPagination =document.querySelector('#server #pagination');
     // Selector for page 3 link
-    var span3Selector = '.paging.style-scope.px-pagination > span > :nth-child(3)';
+    var span3Selector = '.paging.style-scope.px-pagination > span > :nth-child(1)';
       test ('should not paginate',function(done){
         var fixture = document.querySelector('#server');
         var serverSpan3 = serverPagination.querySelector(span3Selector);
         var table = Polymer.dom(fixture.root).querySelector('aha-table'),
         allLastNameRow = Polymer.dom(table.root).querySelectorAll('.aha-last-td');
+                    debugger;
+
         //before page 3 is clicked, row should be 26
         assert.equal(allLastNameRow.length, '26');
         serverSpan3.addEventListener('click', function(e) {

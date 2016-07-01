@@ -78,6 +78,7 @@ Events:
                  table-columns="{{tableColumns}}"
                  table-rows="{{tableRows}}"
                  selectable="{{selectable}}"
+                 single-selectable="{{singleSelectable}}"
                  selected-rows="{{selectedRows}}"
                  meta="{{meta}}"
                  hide-pagination-control="{{hidePaginationControl}}"
@@ -193,6 +194,19 @@ Events:
        * @default false
        */
       selectable: {
+        type: Boolean,
+        value: false
+      },
+
+      /**
+       * Use the singleSelectable attribute if the table rows should be able to be selected, but only one at
+       *
+       *      <px-data-table singleSelectable table-data="{{data}}"></px-data-table>
+       *
+       * @default false
+       */
+
+      singleSelectable: {
         type: Boolean,
         value: false
       },

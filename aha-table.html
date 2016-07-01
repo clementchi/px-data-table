@@ -158,11 +158,26 @@
         },
         notify: true
       },
+      //selectedSingleRow: The selected row will be referenced here, only accept one selected row
+      selectedSingleRow: {
+        type: Object,
+        notify: true
+      },
+
+      _previousRowSelected: {
+        type: Number,
+        notify: true
+      },
       //selectable: if table row is selectable
       selectable: {
         type: Boolean,
         value: false,
         observer: "_selectableChanged"
+      },
+      //singleSelectable: if table row is selectable one at a time
+      singleSelectable: {
+        type: Boolean,
+        observer:"_selectableChanged"
       },
       //striped: if table row is striped
       striped: {
@@ -408,8 +423,8 @@
       });
 
       if(addedColumns.length > 0) {
-        // need the Selected column if the table is selectable
-        if(this.selectable && !this._selectedColumnExists()) {
+        // need the Selected column if the table is selectable or singleSelectable
+        if((this.selectable || this.singleSelectable) && !this._selectedColumnExists()) {
           // add a selected column if selectable
           this.push('meta', this._generateMetaForColumn("_selected", "selected", true, "Selected (0)"));
         }
@@ -694,7 +709,8 @@
           _filtered: (resetDataState || !this._internalData[i] ? false : this._internalData[i]._filtered),
           _selected: (resetDataState || !this._internalData[i] ? false : this._internalData[i]._selected),
           _highlight: (resetDataState || !this._internalData[i] ? {value:false, highlightColor: ''} : this._internalData[i]._highlight),
-          _selectable: this._isRowSelectable(this.selectable, this.data[i])
+          _selectable: this._isRowSelectable(this.selectable, this.data[i]),
+          _singleSelectable: this.singleSelectable
         });
       }
       return _internalData;
@@ -1081,8 +1097,14 @@
           detail = {"row": row, "column": column};
       this.fire('px-row-click', detail); // fire the event after it is marked selected
 
+      //if singleSelectable is enabled and no other rows were selected before
+      if (this.singleSelectable){
+        console.log("came to singleSelectable");
+        this._selectRow(row, this.$.recordList.indexForElement(evt.currentTarget),this.singleSelectable);
+      }
+
       if(this.selectable && row._selectable) {
-        this._selectRow(row, this.$.recordList.indexForElement(evt.currentTarget));
+        this._selectRow(row, this.$.recordList.indexForElement(evt.currentTarget),this.singleSelectable);
         var selectableInternalData = this._internalData.filter(function(row){
           return row._selectable;
         });
@@ -1160,19 +1182,49 @@
 
     },
 
-    _selectRow: function(row, indexInDisplayedRows) {
+    _selectRow: function(row, indexInDisplayedRows,singleSelect) {
+
+
       this.fire('before-select', row);
-      if(this.selectedRows.indexOf(row) > -1) {
-        row._selected = false;
-        this.notifyPath('displayedRows.' + indexInDisplayedRows + '._selected', row._selected);
-        this.splice('selectedRows', this.selectedRows.indexOf(row), 1);
+
+      if (singleSelect){
+        if (this.selectedSingleRow){
+          //if the row selected is what was previously selected
+          if (_.isEqual(this.selectedSingleRow,row)){
+            row._selected = false;
+            this.notifyPath('displayedRows.' + indexInDisplayedRows + '._selected', row._selected);
+            this.set('selectedSingleRow',null);
+          }
+          //if another row is selected
+          else{
+            this.selectedSingleRow._selected=false;
+            row._selected=true;
+            this.notifyPath('displayedRows.' + indexInDisplayedRows + '._selected', row._selected);
+            this.notifyPath('displayedRows.' + this._previousRowSelected + '._selected', this.selectedSingleRow._selected);
+            this.set('selectedSingleRow',row);
+            this.set('_previousRowSelected',indexInDisplayedRows);
+          }
+        }
+        else{
+          row._selected = true;
+          this.notifyPath('displayedRows.' + indexInDisplayedRows + '._selected', row._selected);
+          this.set('selectedSingleRow',row);
+          this.set('_previousRowSelected',indexInDisplayedRows);
+        }
       }
-      else {
-        row._selected = true;
-        this.notifyPath('displayedRows.' + indexInDisplayedRows + '._selected', row._selected);
-        this.push('selectedRows', row);
+      else{
+        if(this.selectedRows.indexOf(row) > -1) {
+          row._selected = false;
+          this.notifyPath('displayedRows.' + indexInDisplayedRows + '._selected', row._selected);
+          this.splice('selectedRows', this.selectedRows.indexOf(row), 1);
       }
+        else {
+          row._selected = true;
+          this.notifyPath('displayedRows.' + indexInDisplayedRows + '._selected', row._selected);
+          this.push('selectedRows', row);
+        }
       this.set('meta.0.label', "Selected (" + this.selectedRows.length+ ")");
+      }
 
       this.fire('after-select', row);
     },
