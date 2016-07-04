@@ -177,6 +177,7 @@
       //singleSelectable: if table row is selectable one at a time
       singleSelectable: {
         type: Boolean,
+        value: false,
         observer:"_selectableChanged"
       },
       //striped: if table row is striped
@@ -1099,7 +1100,6 @@
 
       //if singleSelectable is enabled and no other rows were selected before
       if (this.singleSelectable){
-        console.log("came to singleSelectable");
         this._selectRow(row, this.$.recordList.indexForElement(evt.currentTarget),this.singleSelectable);
       }
 
@@ -1115,11 +1115,10 @@
         else {
           this._setSelectAllCheckbox(false);
         }
-
-        // if sorted row is selected, then it is no longer selected
-        if(this.sortedColumn === '_selected') {
-          this.set('sortedColumn', '');
-        }
+      }
+      // if sorted row is selected, then it is no longer selected
+      if(this.sortedColumn === '_selected') {
+        this.set('sortedColumn', '');
       }
     },
     _clickCell: function(evt) {
@@ -1751,7 +1750,7 @@
       return header;
     },
     _computeIfColumnFilterEnabled: function(meta, filterable) {
-      this._enableFilterRow = meta && (this.selectable === true || filterable && this.meta.some(function(val){
+      this._enableFilterRow = meta && (this.selectable === true ||this.singleSelectable === true || filterable && this.meta.some(function(val){
         return this._isFilterableColumn(val);
       }.bind(this)));
     }

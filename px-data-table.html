@@ -80,6 +80,7 @@ Events:
                  selectable="{{selectable}}"
                  single-selectable="{{singleSelectable}}"
                  selected-rows="{{selectedRows}}"
+                 hover-single-row="{{hoverSingleRow}}"
                  meta="{{meta}}"
                  hide-pagination-control="{{hidePaginationControl}}"
                  show-column-chooser="{{showColumnChooser}}"
@@ -201,16 +202,25 @@ Events:
       /**
        * Use the singleSelectable attribute if the table rows should be able to be selected, but only one at
        *
-       *      <px-data-table singleSelectable table-data="{{data}}"></px-data-table>
+       *      <px-data-table single-selectable table-data="{{data}}"></px-data-table>
        *
        * @default false
        */
-
       singleSelectable: {
         type: Boolean,
         value: false
       },
-
+      /**
+       * Use the hoverSingleRow attribute if the user can hover over a row and highlight that particular row
+       *
+       *      <px-data-table hover-single-row table-data="{{data}}"></px-data-table>
+       *
+       * @default false
+       */
+      hoverSingleRow: {
+        type: Boolean,
+        value: false
+      },
       /**
        * Property to set the visibility of the table pagination controls.
        *
