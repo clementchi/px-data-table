@@ -177,13 +177,11 @@
       //singleSelectable: if table row is selectable one at a time
       singleSelectable: {
         type: Boolean,
-        value: false,
-        observer:"_selectableChanged"
+        value: false
       },
       hoverSingleRow: {
         type: Boolean,
-        value: false,
-        observer:"_selectableChanged"
+        value: false
       },
       //striped: if table row is striped
       striped: {
@@ -430,7 +428,7 @@
 
       if(addedColumns.length > 0) {
         // need the Selected column if the table is selectable or singleSelectable
-        if((this.selectable || this.singleSelectable) && !this._selectedColumnExists()) {
+        if(this.selectable && !this._selectedColumnExists()) {
           // add a selected column if selectable
           this.push('meta', this._generateMetaForColumn("_selected", "selected", true, "Selected (0)"));
         }
@@ -587,11 +585,11 @@
 
     },
 
-    _selectableChanged: function(newSelectable) {
+    _selectableChanged: function() {
       // if meta is already defined and then selectable is set, we need to backfill the meta with the _selected column
-      if(newSelectable === true && this.meta !== null && this.meta !== undefined && this.meta.length > 0) {
+      if(this.selectable === true && this.meta !== null && this.meta !== undefined && this.meta.length > 0) {
         this.splice('meta', 0, 0, this._generateMetaForColumn("_selected", "selected", true, "Selected (0)"));
-      } else if(newSelectable === false && this.meta !== null && this.meta !== undefined && this.meta.length > 0 && this.meta[0].name === "_selected"){
+      } else if(this.selectable === false && this.meta !== null && this.meta !== undefined && this.meta.length > 0 && this.meta[0].name === "_selected"){
         this.shift('meta');
       }
 
@@ -618,6 +616,7 @@
         this.notifyPath('displayedRows.' + indexInDisplayedRows + '._selected', row._selected);
       }
     },
+
 
     /********** Generating column metadata *************/
 
