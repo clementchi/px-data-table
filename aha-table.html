@@ -74,7 +74,7 @@
         <!-- Data rows -->
         <template id="recordList" is="dom-repeat" items="{{displayedRows}}" as="internalRow" strip-whitespace>
 
-          <div class$="{{_getRowClass(internalRow)}}" on-click="_clickRow" on-mouseover='onRowHovered' on-mouseout='onRowUnHovered'>
+          <div class$="{{_getRowClass(internalRow)}}" on-click="_clickRow">
             <!-- Data cells -->
             <template is="dom-repeat" items="{{meta}}" as="column">
               <template is="dom-if" if="{{_isFalse(column.hide)}}">
@@ -164,10 +164,14 @@
         notify: true
       },
 
-      _previousRowSelected: {
-        type: Number,
+_previousRowSelectedIndex: {
+       type: Number,
         notify: true
       },
+  _previousRowSelected: {
+      type: Number,
+      notify: true
+  },
       //selectable: if table row is selectable
       selectable: {
         type: Boolean,
@@ -179,7 +183,7 @@
         type: Boolean,
         value: false
       },
-      hoverSingleRow: {
+      hoverHighlight: {
         type: Boolean,
         value: false
       },
@@ -594,30 +598,6 @@
       }
 
     },
-
-    onRowHovered: function(evt){
-      if (this.hoverSingleRow){
-        var column = evt.model.column,
-        row = evt.model.internalRow,
-        detail = {"row": row, "column": column};
-        row._selected = true;
-        indexInDisplayedRows=this.$.recordList.indexForElement(evt.currentTarget);
-        this.notifyPath('displayedRows.' + indexInDisplayedRows + '._selected', row._selected);
-      }
-    },
-
-    onRowUnHovered: function(evt){
-      if (this.hoverSingleRow){
-        var column = evt.model.column,
-        row = evt.model.internalRow,
-        detail = {"row": row, "column": column};
-        row._selected = false;
-        indexInDisplayedRows=this.$.recordList.indexForElement(evt.currentTarget);
-        this.notifyPath('displayedRows.' + indexInDisplayedRows + '._selected', row._selected);
-      }
-    },
-
-
     /********** Generating column metadata *************/
 
 
@@ -737,9 +717,7 @@
           _selected: (resetDataState || !this._internalData[i] ? false : this._internalData[i]._selected),
           _highlight: (resetDataState || !this._internalData[i] ? {value:false, highlightColor: ''} : this._internalData[i]._highlight),
           _selectable: this._isRowSelectable(this.selectable, this.data[i]),
-          _singleSelectable: this.singleSelectable,
-          _hoverSingleRow:this.hoverSingleRow
-        });
+          _singleSelectable: this.singleSelectable        });
       }
       return _internalData;
 
@@ -1127,11 +1105,11 @@
 
       //if singleSelectable is enabled and no other rows were selected before
       if (this.singleSelectable){
-        this._selectRow(row, this.$.recordList.indexForElement(evt.currentTarget),this.singleSelectable);
+        this._singleSelectRow(row, this.$.recordList.indexForElement(evt.currentTarget));
       }
 
       if(this.selectable && row._selectable) {
-        this._selectRow(row, this.$.recordList.indexForElement(evt.currentTarget),this.singleSelectable);
+        this._multiSelectRow(row, this.$.recordList.indexForElement(evt.currentTarget));
         var selectableInternalData = this._internalData.filter(function(row){
           return row._selectable;
         });
@@ -1207,50 +1185,46 @@
       this.fire('px-select-all-click', this.selectedRows);
 
     },
+    _singleSelectRow: function(row, indexInDisplayedRows) {
 
-    _selectRow: function(row, indexInDisplayedRows,singleSelect) {
+      this.fire('before-select', row);
+      // this.notifyPath('displayedRows.' + indexInDisplayedRows + '._selected', selectedRows[0]._selected);
+      this.splice('selectedRows', 0, this.selectedRows.length);
+      if (this._previousRowSelectedIndex || this._previousRowSelectedIndex === 0) {
+        this.selectedSingleRow._selected=false;
+        this.notifyPath('displayedRows.' + this._previousRowSelectedIndex + '._selected', this.selectedSingleRow._selected);        
+      }
+      if (this._previousRowSelectedIndex !== indexInDisplayedRows){
+        row._selected=true;
+        this.push('selectedRows', row);
+        this.notifyPath('displayedRows.' + indexInDisplayedRows + '._selected', row._selected);
+        this._previousRowSelectedIndex = indexInDisplayedRows;   
+        this.set('selectedSingleRow',row); 
+      }
+      else {
+        row._selected=false;
+        this.notifyPath('displayedRows.' + indexInDisplayedRows + '._selected', row._selected);
+        this._previousRowSelectedIndex = null;   
+        this.set('selectedSingleRow',null); 
+      }
 
+      this.fire('after-select', row);
+    },
+    _multiSelectRow: function(row, indexInDisplayedRows) {
 
       this.fire('before-select', row);
 
-      if (singleSelect){
-        if (this.selectedSingleRow){
-          //if the row selected is what was previously selected
-          if (_.isEqual(this.selectedSingleRow,row)){
-            row._selected = false;
-            this.notifyPath('displayedRows.' + indexInDisplayedRows + '._selected', row._selected);
-            this.set('selectedSingleRow',null);
-          }
-          //if another row is selected
-          else{
-            this.selectedSingleRow._selected=false;
-            row._selected=true;
-            this.notifyPath('displayedRows.' + indexInDisplayedRows + '._selected', row._selected);
-            this.notifyPath('displayedRows.' + this._previousRowSelected + '._selected', this.selectedSingleRow._selected);
-            this.set('selectedSingleRow',row);
-            this.set('_previousRowSelected',indexInDisplayedRows);
-          }
-        }
-        else{
-          row._selected = true;
-          this.notifyPath('displayedRows.' + indexInDisplayedRows + '._selected', row._selected);
-          this.set('selectedSingleRow',row);
-          this.set('_previousRowSelected',indexInDisplayedRows);
-        }
+      if(this.selectedRows.indexOf(row) > -1) {
+        row._selected = false;
+        this.notifyPath('displayedRows.' + indexInDisplayedRows + '._selected', row._selected);
+        this.splice('selectedRows', this.selectedRows.indexOf(row), 1);
       }
-      else{
-        if(this.selectedRows.indexOf(row) > -1) {
-          row._selected = false;
-          this.notifyPath('displayedRows.' + indexInDisplayedRows + '._selected', row._selected);
-          this.splice('selectedRows', this.selectedRows.indexOf(row), 1);
+      else {
+        row._selected = true;
+        this.notifyPath('displayedRows.' + indexInDisplayedRows + '._selected', row._selected);
+        this.push('selectedRows', row);
       }
-        else {
-          row._selected = true;
-          this.notifyPath('displayedRows.' + indexInDisplayedRows + '._selected', row._selected);
-          this.push('selectedRows', row);
-        }
       this.set('meta.0.label', "Selected (" + this.selectedRows.length+ ")");
-      }
 
       this.fire('after-select', row);
     },
@@ -1604,7 +1578,8 @@
 
     _getRowClass: function(row) {
       return ['tr', 'rows',
-        this.striped ? 'striped' : ''
+        this.striped ? 'striped' : '',
+        this.hoverHighlight ? 'hoverHighlight' : '' 
       ].join(' ');
     },
     _getHighlightValue: function(row, column, high) {
