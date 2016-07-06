@@ -74,7 +74,7 @@
         <!-- Data rows -->
         <template id="recordList" is="dom-repeat" items="{{displayedRows}}" as="internalRow" strip-whitespace>
 
-          <div class$="{{_getRowClass(internalRow)}}" on-click="_clickRow">
+          <div class$="{{_getRowClass(internalRow)}}" on-click="_clickRow" on-mouseover='onRowHovered' on-mouseout='onRowUnHovered'>
             <!-- Data cells -->
             <template is="dom-repeat" items="{{meta}}" as="column">
               <template is="dom-if" if="{{_isFalse(column.hide)}}">
@@ -176,6 +176,11 @@
       },
       //singleSelectable: if table row is selectable one at a time
       singleSelectable: {
+        type: Boolean,
+        value: false,
+        observer:"_selectableChanged"
+      },
+      hoverSingleRow: {
         type: Boolean,
         value: false,
         observer:"_selectableChanged"
@@ -592,6 +597,28 @@
 
     },
 
+    onRowHovered: function(evt){
+      if (this.hoverSingleRow){
+        var column = evt.model.column,
+        row = evt.model.internalRow,
+        detail = {"row": row, "column": column};
+        row._selected = true;
+        indexInDisplayedRows=this.$.recordList.indexForElement(evt.currentTarget);
+        this.notifyPath('displayedRows.' + indexInDisplayedRows + '._selected', row._selected);
+      }
+    },
+
+    onRowUnHovered: function(evt){
+      if (this.hoverSingleRow){
+        var column = evt.model.column,
+        row = evt.model.internalRow,
+        detail = {"row": row, "column": column};
+        row._selected = false;
+        indexInDisplayedRows=this.$.recordList.indexForElement(evt.currentTarget);
+        this.notifyPath('displayedRows.' + indexInDisplayedRows + '._selected', row._selected);
+      }
+    },
+
     /********** Generating column metadata *************/
 
 
@@ -711,7 +738,8 @@
           _selected: (resetDataState || !this._internalData[i] ? false : this._internalData[i]._selected),
           _highlight: (resetDataState || !this._internalData[i] ? {value:false, highlightColor: ''} : this._internalData[i]._highlight),
           _selectable: this._isRowSelectable(this.selectable, this.data[i]),
-          _singleSelectable: this.singleSelectable
+          _singleSelectable: this.singleSelectable,
+          _hoverSingleRow:this.hoverSingleRow
         });
       }
       return _internalData;

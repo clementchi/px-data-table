@@ -80,6 +80,7 @@ Events:
                  selectable="{{selectable}}"
                  single-selectable="{{singleSelectable}}"
                  selected-rows="{{selectedRows}}"
+                 selected-single-row="{{selectedSingleRow}}"
                  hover-single-row="{{hoverSingleRow}}"
                  meta="{{meta}}"
                  hide-pagination-control="{{hidePaginationControl}}"
@@ -246,6 +247,18 @@ Events:
         value: function() {
           return [];
         },
+        notify: true
+      },
+      /**
+       * get the one selected row in the data table setup for binding.
+       *
+       * This property is read only.
+       *
+       *      <px-data-table selectedSingleRow="{{mySelectedItems}}" table-data="{{data}}"></px-data-table>
+       *
+       */
+      selectedSingleRow: {
+        type: Object,
         notify: true
       },
       /**
