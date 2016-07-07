@@ -19,7 +19,7 @@
   </head>
 
   <body>
-<!-- 
+
       <h3>Data table demos</h3>
 
       <p>A very simple data table.  Just displays data and has sortable columns.</p>
@@ -119,18 +119,29 @@
           </template>
         </px-data-table>
       </template>
- -->
-      <p>Server table</p>
-<!--       <px-data-table id="server" disable-client-table></px-data-table>
- -->
 
- <px-data-table initial-table-state='{"pageSize":20, "firstItemIndex": 1, "sortedColumn": "first", "descending": false}' server-table total-rows-in-server="40" id="server">
- 
-</px-data-table>
+
+      <p>Multi Select test</p>
+      <px-data-table selectable id="multi-select-test"></px-data-table>
+
+      <p>Custom Selectable test</p>
+      <px-data-table selectable id="custom-multi-select-test" is-selectable-row-function-name="tableTest.customSelectableRow">
+        <px-data-table-column name="name"></px-data-table-column>
+        <px-data-table-column name="email"></px-data-table-column>
+        <px-data-table-column name="phone"></px-data-table-column>
+      </px-data-table>
+
+      <p>Server table</p>
+       <px-data-table initial-table-state='{"pageSize":20, "firstItemIndex": 1, "sortedColumn": "first", "descending": false}' server-table total-rows-in-server="40" id="server">
+      </px-data-table>
+
+      <p>Single Selectable test table</p>
+       <px-data-table single-selectable id="singleSelectableTable">
+      </px-data-table>
 
       <script>
-        // var app = document.querySelector('#app');
-        // app.meta = [{name: 'first'}, {name: 'last'}, {name: 'email'}];
+        var app = document.querySelector('#app');
+        app.meta = [{name: 'first'}, {name: 'last'}, {name: 'email'}];
       </script>
 
   </body>

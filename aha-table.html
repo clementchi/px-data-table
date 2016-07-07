@@ -159,19 +159,15 @@
         notify: true
       },
       //selectedSingleRow: The selected row will be referenced here, only accept one selected row
-      selectedSingleRow: {
+      _selectedSingleRow: {
         type: Object,
         notify: true
       },
-
-_previousRowSelectedIndex: {
-       type: Number,
-        notify: true
+      //previousRowSelectedIndex: Used for single selectable to remember the previous row index clicked
+      _previousRowSelectedIndex: {
+           type: Number,
+            notify: true
       },
-  _previousRowSelected: {
-      type: Number,
-      notify: true
-  },
       //selectable: if table row is selectable
       selectable: {
         type: Boolean,
@@ -183,6 +179,7 @@ _previousRowSelectedIndex: {
         type: Boolean,
         value: false
       },
+      //hoverHighlight: Show gray background in row when user hover mouse over a row
       hoverHighlight: {
         type: Boolean,
         value: false
@@ -276,7 +273,10 @@ _previousRowSelectedIndex: {
         type: Boolean,
         value: false
       },
-      _internalData: {
+      /**
+       * Array to store internal data and later will be pass to displayedData Array
+       */      
+       _internalData: {
         type: Array,
         value: function(){return [];}
       },
@@ -331,6 +331,9 @@ _previousRowSelectedIndex: {
         type: Boolean,
         value: false
       },
+      /**
+       * User input for total rows in the server
+       */
       totalRowsInServer: {
         type: Number,
         observer: '_totalRowsInServerChanged'
@@ -347,6 +350,9 @@ _previousRowSelectedIndex: {
         type: Object,
         observer: '_initialTableStateChanged'
       },
+      /**
+      *Property to check for selectable to check if all rows are selected
+      */
       _isSelectedAll: {
         type: Boolean,
         value: true
@@ -452,7 +458,6 @@ _previousRowSelectedIndex: {
           this._addColumn(addedColumns[i]);
         }
       }
-
       removedColumns.forEach(function(columnToRemove){
         this.meta.forEach(function(column, idx){
           if (columnToRemove === column){
@@ -596,10 +601,8 @@ _previousRowSelectedIndex: {
       } else if(this.selectable === false && this.meta !== null && this.meta !== undefined && this.meta.length > 0 && this.meta[0].name === "_selected"){
         this.shift('meta');
       }
-
     },
     /********** Generating column metadata *************/
-
 
     _generateMetaFromData: function() {
       var meta = [];
@@ -717,7 +720,8 @@ _previousRowSelectedIndex: {
           _selected: (resetDataState || !this._internalData[i] ? false : this._internalData[i]._selected),
           _highlight: (resetDataState || !this._internalData[i] ? {value:false, highlightColor: ''} : this._internalData[i]._highlight),
           _selectable: this._isRowSelectable(this.selectable, this.data[i]),
-          _singleSelectable: this.singleSelectable        });
+          _singleSelectable: this.singleSelectable        
+        });
       }
       return _internalData;
 
@@ -1185,31 +1189,33 @@ _previousRowSelectedIndex: {
       this.fire('px-select-all-click', this.selectedRows);
 
     },
+
     _singleSelectRow: function(row, indexInDisplayedRows) {
 
       this.fire('before-select', row);
       // this.notifyPath('displayedRows.' + indexInDisplayedRows + '._selected', selectedRows[0]._selected);
       this.splice('selectedRows', 0, this.selectedRows.length);
       if (this._previousRowSelectedIndex || this._previousRowSelectedIndex === 0) {
-        this.selectedSingleRow._selected=false;
-        this.notifyPath('displayedRows.' + this._previousRowSelectedIndex + '._selected', this.selectedSingleRow._selected);        
+        this._selectedSingleRow._selected=false;
+        this.notifyPath('displayedRows.' + this._previousRowSelectedIndex + '._selected', this._selectedSingleRow._selected);       
       }
       if (this._previousRowSelectedIndex !== indexInDisplayedRows){
         row._selected=true;
         this.push('selectedRows', row);
         this.notifyPath('displayedRows.' + indexInDisplayedRows + '._selected', row._selected);
         this._previousRowSelectedIndex = indexInDisplayedRows;   
-        this.set('selectedSingleRow',row); 
+        this.set('_selectedSingleRow',row); 
       }
       else {
         row._selected=false;
         this.notifyPath('displayedRows.' + indexInDisplayedRows + '._selected', row._selected);
         this._previousRowSelectedIndex = null;   
-        this.set('selectedSingleRow',null); 
+        this.set('_selectedSingleRow',null); 
       }
 
       this.fire('after-select', row);
     },
+
     _multiSelectRow: function(row, indexInDisplayedRows) {
 
       this.fire('before-select', row);
