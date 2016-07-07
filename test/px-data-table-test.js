@@ -1614,6 +1614,34 @@ function runTests() {
 //
 //    });
 
+    suite('multi-selectable table test', function(){
+      test('should select all rows when clicking select all', function(){
+        //check selected rows array here
+      });
+
+      test('should check the select all box when all rows on display are checked', function(){
+
+      });
+
+      test('should uncheck the select all when 1 row is not checked', function(){
+
+      });
+
+      test('should not have the check box when is-selectable-function-name is used', function(){
+
+      });
+    });
+
+    suite('single-selectable table test', function(){
+      test('should not have checkboxes on each row and select all checkbox', function(){
+
+      });
+
+      test('should only do single row select', function(){
+        //check selected row array here
+      });
+    });
+
     suite('server table test',function(){
       test ('should not sort',function(done){
         var fixture = document.querySelector('#server');
@@ -1634,11 +1662,18 @@ function runTests() {
 
       var eventData;
       document.querySelector('#server').addEventListener('px-data-table-state-changed', function(e){
-        console.log("2");
         eventData = e.detail;
       });
-      
+
+      var assertTableUIState = function(tableId, sortedColumnText, pageSize, pageNumber, numberOfRows){
+        assert.equal(testUtil.getTableSortedText(tableId), sortedColumnText);
+        assert.equal(testUtil.getTablePagingLimit(tableId).value, pageSize);
+        assert.equal(testUtil.getTablePageNumber(tableId), pageNumber);
+        assert.equal(testUtil.getAllTableRows(tableId).length, numberOfRows);
+      };
+
       var serverPagination = document.querySelector('#server #pagination');
+
       // Selector for page 2 link
       var page2Selector = '.paging.style-scope.px-pagination > span > :nth-child(2)';
       test ('should not paginate',function(done){
@@ -1664,7 +1699,6 @@ function runTests() {
         var emailHeader = fixture.querySelector(emailHeaderSelector);
         emailHeader.click();
         setTimeout(function(){
-            debugger;
           assert.equal(eventData.firstItemIndex, '1');
           assert.equal(eventData.sortedColumn, 'email');
           assert.equal(eventData.descending, false);
@@ -1678,10 +1712,22 @@ function runTests() {
         var page1Button = serverPagination.querySelector(page1Selector);
         page1Button.click();
         setTimeout(function(){
-            console.log("3");
           assert.equal(eventData.firstItemIndex, '1');
           assert.equal(eventData.sortedColumn, 'email');
           assert.equal(eventData.descending, false);
+          done();
+        },10);
+      });
+
+      test('should emit table state changed event when changing page size',function(done){
+        testUtil.setTablePagingLimit('#server', 10);
+
+        setTimeout(function(){
+          assertTableUIState('#server', 'Email', 10, 1, 20);
+          assert.equal(eventData.firstItemIndex, '1');
+          assert.equal(eventData.sortedColumn, 'email');
+          assert.equal(eventData.descending, false);
+          assert.equal(eventData.pageSize, 10);
           done();
         },10);
       });
