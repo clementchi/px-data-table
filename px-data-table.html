@@ -18,7 +18,7 @@ Advanced:
 
     <px-data-table filterable selectable table-data="{{data}}"></px-data-table>
 
-    <px-data-table selected-rows="{{mySelectedRows}}" filterable selectable striped table-data="{{data}}">
+    <px-data-table selected-rows="{{mySelectedRows}}" filterable selectable striped table-data="{{data}}" is-selectable-row-function-name="customSelectableRowFunction">
       <px-data-table-column
         name="first"
     		sortable
@@ -31,6 +31,21 @@ Advanced:
       <px-data-table-column name="date" ...></px-data-table-column>
     </px-data-table>
 
+    <px-data-table initial-table-state='{"pageSize": 10, "firstItemIndex": 1, "sortedColumn": "first", "descending": false}'
+      server-table
+      total-rows-in-server="40"
+      table-data="{{data}}">
+      <px-data-table-column
+        name="first"
+    		sortable
+        editable
+        filter-function-name="mytableCustomFunctions.filterWholeWord"
+        sort-function-name="mytableCustomFunctions.sortByEmailDomain">
+      </px-data-table-column>
+      <px-data-table-column name="last" ...></px-data-table-column>
+      <px-data-table-column name="color" ...></px-data-table-column>
+      <px-data-table-column name="date" ...></px-data-table-column>
+    </px-data-table>
 
 ##### Integrating with other frameworks (ex: Angular):
 
@@ -64,6 +79,17 @@ Events:
       document.getElementById("mytable").addEventListener("px-select-all-click", function(e) {
         var allSelectedRows = e.detail;
         console.log("Select/unselect all", allSelectedRows);
+      });
+
+- px-data-table-state-changed : fired when column is sorted, page size changed, page change, filter change. Use this to generate server request for sorting, pagination and filtering.
+
+      document.getElementById("mytable").addEventListener("px-data-table-state-changed", function(e) {
+        var tableState = e.detail;
+        console.log("first record index in selected page", tableState.firstItemIndex);
+        console.log("sorted column", tableState.sortedColumn);
+        console.log("sort order", tableState.descending);
+        console.log("selected page size", tableState.pageSize);
+        console.log("filters", tableState.filteredColumns);
       });
 
 @demo demo.html
@@ -279,7 +305,7 @@ Events:
         value: false
       },
       /**
-       * Property to enable server side sorting, filtering, pagination
+       * Property to disable sorting, pagination and filtering of data within the data table.
        *
        * @default false
        */
@@ -288,24 +314,37 @@ Events:
         value: false
       },
       /**
-       * Property to input how many rows are in the server
-       *
+       * Property set the total number of records in server.
+       * You must set this value if you enable server-table
+       * Your server data pagination api should return the total record count.
        */
       totalRowsInServer: {
         type: Number
       },
       /**
-       * Property to set initial state
-       * pageSize - number of record per page
-       * firstItemIndex - server record offset
-       * sortedColumn - sorted column
+       * Property to set initial table state.
+       *
+       * pageSize - number of record per page,
+       * firstItemIndex - server record offset,
+       * sortedColumn - sorted column,
        * descending - sort order
+       *
+       * e.g.
+       *
+       * {
+       *  "pageSize": 10,
+       *  "firstItemIndex: 1,
+       *  "sortedColumn": "name",
+       *  "descending": true
+       * }
+       *
        */
       initialTableState: {
         type: Object
       },
       /**
-       *Function name to pass in here for custom function 
+       * function name to return the row is selectable or not
+       * This only works when selectable is enabled
        */
       isSelectableRowFunctionName:{
         type: String

@@ -1,5 +1,4 @@
 <!--
-/**
  * @module aha-table
  *
  * Internal table helper component used by px-data-table.
@@ -323,7 +322,7 @@
         }
       },
       /**
-       * Property to enable server side sorting, filtering, pagination
+       * Property to disable sorting, pagination and filtering of data within the data table.
        *
        * @default false
        */
@@ -332,26 +331,39 @@
         value: false
       },
       /**
-       * User input for total rows in the server
+       * Property set the total number of records in server.
+       * You must set this value if you enable server-table
+       * Your server data pagination api should return the total record count.
        */
       totalRowsInServer: {
         type: Number,
         observer: '_totalRowsInServerChanged'
       },
       /**
-       * Property to set initial state
-       * pageSize - number of record per page
-       * totalRowsInServer - total number of records in server
-       * firstItemIndex - server record offset
-       * sortedColumn - sorted column
+       * Property to set initial table state.
+       *
+       * pageSize - number of record per page,
+       * firstItemIndex - server record offset,
+       * sortedColumn - sorted column,
        * descending - sort order
+       *
+       * e.g.
+       *
+       * {
+       *  "pageSize": 10,
+       *  "firstItemIndex: 1,
+       *  "sortedColumn": "name",
+       *  "descending": true
+       * }
+       *
        */
       initialTableState: {
         type: Object,
         observer: '_initialTableStateChanged'
       },
       /**
-      *Property to check for selectable to check if all rows are selected
+      * Property to check if all rows are selected
+      * Only works if selectable is enabled.
       */
       _isSelectedAll: {
         type: Boolean,
