@@ -1,5 +1,4 @@
 <!--
-/**
  * @module aha-table
  *
  * Internal table helper component used by px-data-table.
@@ -74,7 +73,7 @@
         <!-- Data rows -->
         <template id="recordList" is="dom-repeat" items="{{displayedRows}}" as="internalRow" strip-whitespace>
 
-          <div class$="{{_getRowClass(internalRow)}}">
+          <div class$="{{_getRowClass(internalRow)}}" on-click="_clickRow">
             <!-- Data cells -->
             <template is="dom-repeat" items="{{meta}}" as="column">
               <template is="dom-if" if="{{_isFalse(column.hide)}}">
@@ -82,7 +81,7 @@
                 <template is="dom-if" if="{{_isEqual(column.type, 'selected')}}">
                   <span class$="{{_getSelectedCellClass(internalRow._selected, internalRow._highlight)}}">
                   <template is="dom-if" if="{{internalRow._selectable}}">
-                    <span class="flex flex--center flex--middle" on-click="_clickRow">
+                    <span class="flex flex--center flex--middle">
                       <input type="checkbox"
                       checked="{{internalRow._selected::change}}"/>
                     </span>
@@ -158,11 +157,31 @@
         },
         notify: true
       },
+      //selectedSingleRow: The selected row will be referenced here, only accept one selected row
+      _selectedSingleRow: {
+        type: Object,
+        notify: true
+      },
+      //previousRowSelectedIndex: Used for single selectable to remember the previous row index clicked
+      _previousRowSelectedIndex: {
+           type: Number,
+            notify: true
+      },
       //selectable: if table row is selectable
       selectable: {
         type: Boolean,
         value: false,
         observer: "_selectableChanged"
+      },
+      //singleSelectable: if table row is selectable one at a time
+      singleSelectable: {
+        type: Boolean,
+        value: false
+      },
+      //hoverHighlight: Show gray background in row when user hover mouse over a row
+      hoverHighlight: {
+        type: Boolean,
+        value: false
       },
       //striped: if table row is striped
       striped: {
@@ -253,7 +272,10 @@
         type: Boolean,
         value: false
       },
-      _internalData: {
+      /**
+       * Array to store internal data and later will be pass to displayedData Array
+       */      
+       _internalData: {
         type: Array,
         value: function(){return [];}
       },
@@ -300,7 +322,7 @@
         }
       },
       /**
-       * Property to enable server side sorting, filtering, pagination
+       * Property to disable sorting, pagination and filtering of data within the data table.
        *
        * @default false
        */
@@ -308,22 +330,41 @@
         type: Boolean,
         value: false
       },
+      /**
+       * Property set the total number of records in server.
+       * You must set this value if you enable server-table
+       * Your server data pagination api should return the total record count.
+       */
       totalRowsInServer: {
         type: Number,
         observer: '_totalRowsInServerChanged'
       },
       /**
-       * Property to set initial state
-       * pageSize - number of record per page
-       * totalRowsInServer - total number of records in server
-       * firstItemIndex - server record offset
-       * sortedColumn - sorted column
+       * Property to set initial table state.
+       *
+       * pageSize - number of record per page,
+       * firstItemIndex - server record offset,
+       * sortedColumn - sorted column,
        * descending - sort order
+       *
+       * e.g.
+       *
+       * {
+       *  "pageSize": 10,
+       *  "firstItemIndex: 1,
+       *  "sortedColumn": "name",
+       *  "descending": true
+       * }
+       *
        */
       initialTableState: {
         type: Object,
         observer: '_initialTableStateChanged'
       },
+      /**
+      * Property to check if all rows are selected
+      * Only works if selectable is enabled.
+      */
       _isSelectedAll: {
         type: Boolean,
         value: true
@@ -408,7 +449,7 @@
       });
 
       if(addedColumns.length > 0) {
-        // need the Selected column if the table is selectable
+        // need the Selected column if the table is selectable or singleSelectable
         if(this.selectable && !this._selectedColumnExists()) {
           // add a selected column if selectable
           this.push('meta', this._generateMetaForColumn("_selected", "selected", true, "Selected (0)"));
@@ -429,7 +470,6 @@
           this._addColumn(addedColumns[i]);
         }
       }
-
       removedColumns.forEach(function(columnToRemove){
         this.meta.forEach(function(column, idx){
           if (columnToRemove === column){
@@ -566,18 +606,15 @@
 
     },
 
-    _selectableChanged: function(newSelectable) {
+    _selectableChanged: function() {
       // if meta is already defined and then selectable is set, we need to backfill the meta with the _selected column
-      if(newSelectable === true && this.meta !== null && this.meta !== undefined && this.meta.length > 0) {
+      if(this.selectable === true && this.meta !== null && this.meta !== undefined && this.meta.length > 0) {
         this.splice('meta', 0, 0, this._generateMetaForColumn("_selected", "selected", true, "Selected (0)"));
-      } else if(newSelectable === false && this.meta !== null && this.meta !== undefined && this.meta.length > 0 && this.meta[0].name === "_selected"){
+      } else if(this.selectable === false && this.meta !== null && this.meta !== undefined && this.meta.length > 0 && this.meta[0].name === "_selected"){
         this.shift('meta');
       }
-
     },
-
     /********** Generating column metadata *************/
-
 
     _generateMetaFromData: function() {
       var meta = [];
@@ -694,7 +731,8 @@
           _filtered: (resetDataState || !this._internalData[i] ? false : this._internalData[i]._filtered),
           _selected: (resetDataState || !this._internalData[i] ? false : this._internalData[i]._selected),
           _highlight: (resetDataState || !this._internalData[i] ? {value:false, highlightColor: ''} : this._internalData[i]._highlight),
-          _selectable: this._isRowSelectable(this.selectable, this.data[i])
+          _selectable: this._isRowSelectable(this.selectable, this.data[i]),
+          _singleSelectable: this.singleSelectable        
         });
       }
       return _internalData;
@@ -1081,8 +1119,13 @@
           detail = {"row": row, "column": column};
       this.fire('px-row-click', detail); // fire the event after it is marked selected
 
-      if(this.selectable) {
-        this._selectRow(row, this.$.recordList.indexForElement(evt.currentTarget));
+      //if singleSelectable is enabled and no other rows were selected before
+      if (this.singleSelectable){
+        this._singleSelectRow(row, this.$.recordList.indexForElement(evt.currentTarget));
+      }
+
+      if(this.selectable && row._selectable) {
+        this._multiSelectRow(row, this.$.recordList.indexForElement(evt.currentTarget));
         var selectableInternalData = this._internalData.filter(function(row){
           return row._selectable;
         });
@@ -1093,11 +1136,10 @@
         else {
           this._setSelectAllCheckbox(false);
         }
-
-        // if sorted row is selected, then it is no longer selected
-        if(this.sortedColumn === '_selected') {
-          this.set('sortedColumn', '');
-        }
+      }
+      // if sorted row is selected, then it is no longer selected
+      if(this.sortedColumn === '_selected') {
+        this.set('sortedColumn', '');
       }
     },
     _clickCell: function(evt) {
@@ -1160,8 +1202,36 @@
 
     },
 
-    _selectRow: function(row, indexInDisplayedRows) {
+    _singleSelectRow: function(row, indexInDisplayedRows) {
+
       this.fire('before-select', row);
+      // this.notifyPath('displayedRows.' + indexInDisplayedRows + '._selected', selectedRows[0]._selected);
+      this.splice('selectedRows', 0, this.selectedRows.length);
+      if (this._previousRowSelectedIndex || this._previousRowSelectedIndex === 0) {
+        this._selectedSingleRow._selected=false;
+        this.notifyPath('displayedRows.' + this._previousRowSelectedIndex + '._selected', this._selectedSingleRow._selected);       
+      }
+      if (this._previousRowSelectedIndex !== indexInDisplayedRows){
+        row._selected=true;
+        this.push('selectedRows', row);
+        this.notifyPath('displayedRows.' + indexInDisplayedRows + '._selected', row._selected);
+        this._previousRowSelectedIndex = indexInDisplayedRows;   
+        this.set('_selectedSingleRow',row); 
+      }
+      else {
+        row._selected=false;
+        this.notifyPath('displayedRows.' + indexInDisplayedRows + '._selected', row._selected);
+        this._previousRowSelectedIndex = null;   
+        this.set('_selectedSingleRow',null); 
+      }
+
+      this.fire('after-select', row);
+    },
+
+    _multiSelectRow: function(row, indexInDisplayedRows) {
+
+      this.fire('before-select', row);
+
       if(this.selectedRows.indexOf(row) > -1) {
         row._selected = false;
         this.notifyPath('displayedRows.' + indexInDisplayedRows + '._selected', row._selected);
@@ -1526,7 +1596,8 @@
 
     _getRowClass: function(row) {
       return ['tr', 'rows',
-        this.striped ? 'striped' : ''
+        this.striped ? 'striped' : '',
+        this.hoverHighlight ? 'hoverHighlight' : '' 
       ].join(' ');
     },
     _getHighlightValue: function(row, column, high) {
@@ -1699,7 +1770,7 @@
       return header;
     },
     _computeIfColumnFilterEnabled: function(meta, filterable) {
-      this._enableFilterRow = meta && (this.selectable === true || filterable && this.meta.some(function(val){
+      this._enableFilterRow = meta && (this.selectable === true ||this.singleSelectable === true || filterable && this.meta.some(function(val){
         return this._isFilterableColumn(val);
       }.bind(this)));
     }

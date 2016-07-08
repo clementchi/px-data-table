@@ -18,7 +18,7 @@ Advanced:
 
     <px-data-table filterable selectable table-data="{{data}}"></px-data-table>
 
-    <px-data-table selected-rows="{{mySelectedRows}}" filterable selectable striped table-data="{{data}}">
+    <px-data-table selected-rows="{{mySelectedRows}}" filterable selectable striped table-data="{{data}}" is-selectable-row-function-name="customSelectableRowFunction">
       <px-data-table-column
         name="first"
     		sortable
@@ -31,6 +31,21 @@ Advanced:
       <px-data-table-column name="date" ...></px-data-table-column>
     </px-data-table>
 
+    <px-data-table initial-table-state='{"pageSize": 10, "firstItemIndex": 1, "sortedColumn": "first", "descending": false}'
+      server-table
+      total-rows-in-server="40"
+      table-data="{{data}}">
+      <px-data-table-column
+        name="first"
+    		sortable
+        editable
+        filter-function-name="mytableCustomFunctions.filterWholeWord"
+        sort-function-name="mytableCustomFunctions.sortByEmailDomain">
+      </px-data-table-column>
+      <px-data-table-column name="last" ...></px-data-table-column>
+      <px-data-table-column name="color" ...></px-data-table-column>
+      <px-data-table-column name="date" ...></px-data-table-column>
+    </px-data-table>
 
 ##### Integrating with other frameworks (ex: Angular):
 
@@ -66,6 +81,17 @@ Events:
         console.log("Select/unselect all", allSelectedRows);
       });
 
+- px-data-table-state-changed : fired when column is sorted, page size changed, page change, filter change. Use this to generate server request for sorting, pagination and filtering.
+
+      document.getElementById("mytable").addEventListener("px-data-table-state-changed", function(e) {
+        var tableState = e.detail;
+        console.log("first record index in selected page", tableState.firstItemIndex);
+        console.log("sorted column", tableState.sortedColumn);
+        console.log("sort order", tableState.descending);
+        console.log("selected page size", tableState.pageSize);
+        console.log("filters", tableState.filteredColumns);
+      });
+
 @demo demo.html
 -->
 <dom-module id="px-data-table">
@@ -78,7 +104,9 @@ Events:
                  table-columns="{{tableColumns}}"
                  table-rows="{{tableRows}}"
                  selectable="{{selectable}}"
+                 single-selectable="{{singleSelectable}}"
                  selected-rows="{{selectedRows}}"
+                 hover-highlight="{{hoverHighlight}}"
                  meta="{{meta}}"
                  hide-pagination-control="{{hidePaginationControl}}"
                  show-column-chooser="{{showColumnChooser}}"
@@ -187,7 +215,7 @@ Events:
 
       /**
        * Use the selectable attribute if the table rows should be able to be selected.
-       *
+       * Is not compatible with singleSelectable simultaneously
        *      <px-data-table selectable table-data="{{data}}"></px-data-table>
        *
        * @default false
@@ -197,6 +225,28 @@ Events:
         value: false
       },
 
+      /**
+       * Use the singleSelectable attribute if the table rows should be able to be selected, but only one at a time
+       * Is not compatible with selectable simultaneously
+       *      <px-data-table single-selectable table-data="{{data}}"></px-data-table>
+       *
+       * @default false
+       */
+      singleSelectable: {
+        type: Boolean,
+        value: false
+      },
+      /**
+       * Use the hoverHighlight attribute if the user can hover over a row and highlight that particular row. 
+       * Works with either singleSelectable or selectable, but not both 
+       *      <px-data-table hover-highlight table-data="{{data}}"></px-data-table>
+       *
+       * @default false
+       */
+      hoverHighlight: {
+        type: Boolean,
+        value: false
+      },
       /**
        * Property to set the visibility of the table pagination controls.
        *
@@ -208,10 +258,10 @@ Events:
         type: Boolean,
         value: false
       },
-
       /**
        * Selected rows in the data table setup for binding.
-       *
+       * Note: In server-table mode, SelectedRows will be emptied if clicked on next page.
+       *       In client side, selectedRows will not be emptied if clicked on next page.
        * This property is read only.
        *
        *      <px-data-table selectedRows="{{mySelectedItems}}" table-data="{{data}}"></px-data-table>
@@ -255,7 +305,7 @@ Events:
         value: false
       },
       /**
-       * Property to enable server side sorting, filtering, pagination
+       * Property to disable sorting, pagination and filtering of data within the data table.
        *
        * @default false
        */
@@ -263,19 +313,39 @@ Events:
         type: Boolean,
         value: false
       },
+      /**
+       * Property set the total number of records in server.
+       * You must set this value if you enable server-table
+       * Your server data pagination api should return the total record count.
+       */
       totalRowsInServer: {
         type: Number
       },
       /**
-       * Property to set initial state
-       * pageSize - number of record per page
-       * firstItemIndex - server record offset
-       * sortedColumn - sorted column
+       * Property to set initial table state.
+       *
+       * pageSize - number of record per page,
+       * firstItemIndex - server record offset,
+       * sortedColumn - sorted column,
        * descending - sort order
+       *
+       * e.g.
+       *
+       * {
+       *  "pageSize": 10,
+       *  "firstItemIndex: 1,
+       *  "sortedColumn": "name",
+       *  "descending": true
+       * }
+       *
        */
       initialTableState: {
         type: Object
       },
+      /**
+       * function name to return the row is selectable or not
+       * This only works when selectable is enabled
+       */
       isSelectableRowFunctionName:{
         type: String
       }
@@ -283,13 +353,5 @@ Events:
     _tableDataChanged: function(changeRecord){
       this.$.dataTable.set('data',this.tableData);
     }
-
-    /**
-     * Events:
-     *
-     * px-row-click : fired when table row is clicked (selected or unselected)
-     *
-     */
-
   });
 </script>

@@ -21,12 +21,9 @@
       <h3>Data table demos</h3>
 
       <p>A very simple data table.  Just displays data and has sortable columns.</p>
-      <!--<px-data-table show-column-chooser enable-column-resize filterable enable-column-reorder table-data="{{data}}" ></px-data-table>-->
+      <px-data-table show-column-chooser enable-column-resize enable-column-reorder hide-pagination-control table-data="{{minidata}}"></px-data-table>
 
       <hr>
-
-      <p>Server side sorting, filtering and pagination</p>
-      <px-data-table id="server" table-data="{{data}}" initial-table-state='{"pageSize":20, "firstItemIndex": 21, "sortedColumn": "boolean", "descending": false}' filterable server-table></px-data-table>
 
       <p>Filterable columns and selectable rows.</p>
       <px-data-table filterable selectable table-data="{{data}}"></px-data-table>
@@ -40,6 +37,22 @@
 
       <p>Display as rows instead of a grid.</p>
       <px-data-table table-rows enable-column-reorder table-data="{{data}}"></px-data-table>
+
+      <hr>
+
+      <h3>Server table with single selectable enabled</h3>
+      <p>Disable client side pagination, sorting and filtering. Listen to "px-data-table-state-changed" event from px-data-table and generate ajax call to server.</p>
+
+      <px-data-table initial-table-state='{"pageSize": 10, "firstItemIndex": 1, "sortedColumn": "first", "descending": false}' server-table single-selectable table-data="{{minidata}}" total-rows-in-server="40" id="server">
+        <px-data-table-column sortable name="first">
+        </px-data-table-column>
+        <px-data-table-column sortable name="last">
+        </px-data-table-column>
+        <px-data-table-column sortable name="email">
+        </px-data-table-column>
+        <px-data-table-column sortable name="date">
+        </px-data-table-column>
+      </px-data-table>
 
       <hr>
 
@@ -120,7 +133,7 @@
         </px-data-table-column>
         <px-data-table-column
           name="color"
-    			type="html"
+          type="html"
           filterable
           filter-function-name="myTableCustomFunctions.filterMarkupVal">
         </px-data-table-column>
@@ -136,12 +149,8 @@
         </px-data-table-column>
       </px-data-table>
 
-      <script>
 
-        document.querySelector('#server').addEventListener('px-data-table-state-changed', function(e){
-          //ajax call to get the data with new pagination
-          console.log('table state change event received', e.detail);
-        });
+      <script>
 
         window.myTableCustomFunctions = {
           sortByEmailDomain: function(a, b) {
