@@ -17,7 +17,14 @@
   <link rel="import" type="css" href="css/aha-table.css"/>
   <template>
     <content id="columndefs"></content>
-
+    <template is="dom-if" if="{{enableGlobalSearch}}">
+      <span class="flex columnChooser">
+        <span class="search-box search-container">
+          <input type="text" on-keyup="_globalFilter">
+          <i class="search-icon fa fa-search"></i>
+        </span>
+      </span>
+    </template>
     <template is="dom-if" if="{{showColumnChooser}}">
       <div class="flex columnChooser">
         <px-dropdown display-value="Show/Hide Column">
@@ -62,8 +69,8 @@
                 </template>
 
                 <!-- filter entry -->
-                <template is="dom-if" if="{{_isFilterableColumn(column, column.filterable)}}">
-                  <input placeholder="Filter" class="text-input text-input--filter" type="text" on-keyup="_filter"/>
+                <template is="dom-if" if="{{_isFilterableColumn(column, column.filterable, enableGlobalSearch)}}">
+                  <input placeholder="Filter" class="text-input text-input--filter" type="text" on-keyup="_globalfilter"/>
                 </template>
 
               </span>
@@ -331,6 +338,18 @@
         value: false
       },
       /**
+       * Property enable multi column text filtering, it will apply search on all searchable columns
+       * @default false
+       */
+      enableGlobalSearch: {
+        type: Boolean,
+        value: false
+      },
+      globalSearchText: {
+        type: String,
+        value: ''
+      },
+      /**
        * Property set the total number of records in server.
        * You must set this value if you enable server-table
        * Your server data pagination api should return the total record count.
@@ -426,9 +445,9 @@
       },10);
     },
 
-    _sortedColumnAndFilterChanged: function(sortedColumn, descending, filteredColumns){
+    _sortedColumnAndFilterChanged: function(sortedColumn, descending, filteredColumns, globalSearchText){
       var self = this;
-      this._fireTableStateChangedEvent(this.pageSize, 1, sortedColumn, descending, filteredColumns)
+      this._fireTableStateChangedEvent(this.pageSize, 1, sortedColumn, descending, filteredColumns, globalSearchText)
     },
 
     _paginationChanged: function(pageSize, firstItemIndex){
@@ -682,9 +701,14 @@
         }
 
         // filter
-        for(index in this.filteredColumns) {
-          this.filteredSortedData = this._filterByColumn(this.filteredColumns[index].name,
-                  this.filteredColumns[index].userEntry, this.filteredSortedData);
+        if (this.enableGlobalSearch && this.globalSearchFilter){
+          this.filteredSortedData = this._filterByRow(this.globalSearchFilter, this.filteredSortedData);
+        }
+        else {
+          for(index in this.filteredColumns) {
+            this.filteredSortedData = this._filterByColumn(this.filteredColumns[index].name,
+                    this.filteredColumns[index].userEntry, this.filteredSortedData);
+          }
         }
 
         // count total number of rows
@@ -984,6 +1008,60 @@
       }
     },
 
+    // filter on typed content in global search and assign to each filter
+    _globalFilter: function(e) {
+      var userEntry,filteredColumn;
+
+      //get global search value
+      userEntry = e.target.value;
+      this.globalSearchFilter = userEntry;
+      //find all filterable columns
+      var filterableColumns = this.meta.filter(function(column){
+        return column.filterable && column.name !== '_selected';
+      });
+      //no columns are filterable
+      if (filterableColumns.length > 0){
+        //first time no filterable column tracker has set before
+        this.debounce('globalSearchDebounce', function(){
+          this._filterSortAndUpdateDisplayedTable();
+        }, 500, this);
+      }
+    },
+    _filterByRow: function(userEntry, rowsToFilter){
+      var filterFunction,
+              i,
+              len = rowsToFilter.length,
+              matched,
+              self = this,
+              filteredRows;
+
+      //TODO: performance improvment
+      var filterableColumns = this.meta.filter(function(column){
+        return column.filterable && column.name !== '_selected';
+      });
+
+      for(i = 0; i < len; i++) {
+        matched = false;
+        filterableColumns.forEach(function(column){
+            filterFunction = this._getFilterFunction(column.name);
+            if (!matched){
+              matched = filterFunction(userEntry, this._getInternalDataAt(rowsToFilter[i], column.name));
+            }
+        }, this);
+        if (!matched){
+          this._setInternalDataAt(rowsToFilter[i], '_filtered', true);
+        }
+      }
+
+      this.filtered = rowsToFilter.some(function(row) {
+        return self._getInternalCellStateAt(row, '_filtered');
+      });
+
+      filteredRows = rowsToFilter.filter(function(r) {
+        return !self._getInternalCellStateAt(r, '_filtered');
+      });
+      return filteredRows;
+    },
     _filterByColumn: function(columnName, userEntry, rowsToFilter) {
       var filterFunction = this._getFilterFunction(columnName),
           i,
@@ -1633,8 +1711,8 @@
     _isSelectAllColumn: function(column) {
       return column.selectAll;
     },
-    _isFilterableColumn: function(column, filterable) {
-      return !column.selectAll && column.filterable && !column.hide;
+    _isFilterableColumn: function(column, filterable, enableGlobalSearch) {
+      return !column.selectAll && column.filterable && !column.hide && !enableGlobalSearch;
     },
     _readContent: function(row, column) {
       var datum = this._getInternalDataAt(row, column.name);

@@ -112,6 +112,7 @@ Events:
                  show-column-chooser="{{showColumnChooser}}"
                  enable-column-reorder="{{enableColumnReorder}}"
                  enable-column-resize="{{enableColumnResize}}"
+                 enable-global-search="{{enableGlobalSearch}}"
                  server-table="{{serverTable}}"
                  total-rows-in-server="{{totalRowsInServer}}"
                  initial-table-state="{{initialTableState}}"
@@ -185,6 +186,20 @@ Events:
        * @default false
        */
       filterable: {
+        type: Boolean,
+        value: false
+      },
+
+      /**
+       * Use the filterable attribute if the table has filtering functionality per column turned on.
+       *
+       *      <px-data-table enable-global-search table-data="{{data}}"></px-data-table>
+       *
+       * If columns are specified with px-data-table-column, they must have a filterable attribute to be able to be filtered.
+       *
+       * @default false
+       */
+      enableGlobalSearch: {
         type: Boolean,
         value: false
       },
@@ -304,11 +319,6 @@ Events:
         type: Boolean,
         value: false
       },
-      /**
-       * Property to disable sorting, pagination and filtering of data within the data table.
-       *
-       * @default false
-       */
       serverTable: {
         type: Boolean,
         value: false
