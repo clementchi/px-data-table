@@ -113,6 +113,7 @@ Events:
                  enable-column-reorder="{{enableColumnReorder}}"
                  enable-column-resize="{{enableColumnResize}}"
                  enable-global-search="{{enableGlobalSearch}}"
+                 global-search-text="{{globalSearchText}}"
                  server-table="{{serverTable}}"
                  total-rows-in-server="{{totalRowsInServer}}"
                  initial-table-state="{{initialTableState}}"
@@ -202,6 +203,12 @@ Events:
       enableGlobalSearch: {
         type: Boolean,
         value: false
+      },
+
+      globalSearchText: {
+        type: String,
+        value: '',
+        observer: '_globalSearchTextChanged'
       },
 
       /**
@@ -359,6 +366,9 @@ Events:
       isSelectableRowFunctionName:{
         type: String
       }
+    },
+    _globalSearchTextChanged: function(searchString){
+      this.$.dataTable.set('globalSearchText', searchString);
     },
     _tableDataChanged: function(changeRecord){
       this.$.dataTable.set('data',this.tableData);

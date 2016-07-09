@@ -17,14 +17,6 @@
   <link rel="import" type="css" href="css/aha-table.css"/>
   <template>
     <content id="columndefs"></content>
-    <template is="dom-if" if="{{enableGlobalSearch}}">
-      <span class="flex columnChooser">
-        <span class="search-box search-container">
-          <input type="text" on-keyup="_globalFilter">
-          <i class="search-icon fa fa-search"></i>
-        </span>
-      </span>
-    </template>
     <template is="dom-if" if="{{showColumnChooser}}">
       <div class="flex columnChooser">
         <px-dropdown display-value="Show/Hide Column">
@@ -401,7 +393,8 @@
       '_dataChanged(data.*)',
       '_columnChooserChanged(_columnChooserItems.*)',
       '_computeIfColumnFilterEnabled(meta.splices, filterable, meta.*, selectable)',
-      '_sortedColumnAndFilterChanged(sortedColumn, descending, filteredColumns.*)'
+      '_sortedColumnAndFilterChanged(sortedColumn, descending, filteredColumns.*)',
+      '_filterSortAndUpdateDisplayedTable(globalSearchText)'
     ],
 
     ready: function() {
@@ -701,8 +694,8 @@
         }
 
         // filter
-        if (this.enableGlobalSearch && this.globalSearchFilter){
-          this.filteredSortedData = this._filterByRow(this.globalSearchFilter, this.filteredSortedData);
+        if (this.enableGlobalSearch && this.globalSearchText){
+          this.filteredSortedData = this._filterByRow(this.globalSearchText, this.filteredSortedData);
         }
         else {
           for(index in this.filteredColumns) {
@@ -1110,6 +1103,9 @@
     _defaultFilter: function(searchString, cellValue) {
       if(searchString === undefined || searchString === null || searchString === "") {
         return true;
+      }
+      if (searchString && !cellValue){
+        return false;
       }
       return (cellValue.toString().toLowerCase().indexOf(searchString.toString().toLowerCase()) > -1);
     },
@@ -1777,6 +1773,9 @@
       if(this.enableColumnReorder && item.type !== 'selected') {
         classList.push('moveable');
       }
+      if(item.minWidth){
+        classList.push(minWidth);
+      }
       return classList.join(' ');
     },
     _getSecondHeaderClass: function(filterable) {
@@ -1851,6 +1850,28 @@
       this._enableFilterRow = meta && (this.selectable === true ||this.singleSelectable === true || filterable && this.meta.some(function(val){
         return this._isFilterableColumn(val);
       }.bind(this)));
+    },
+    _getColumnWidthStyle: function(column) {
+      if (column.minwidth || column.maxwidth || column.width || column.horizontalAlign) {
+        var style = "white-space: normal; word-wrap:break-word;";
+        if (column.maxwidth) {
+          style += "max-width: " + column.maxwidth + ";";
+        }
+        if (column.minwidth) {
+          style += "min-width: " + column.minwidth + ";";
+        } else {
+          // set min-width to 100% if it's not set
+          style += "min-width: 100%;";
+        }
+        if (column.width) {
+          style += "width: " + column.width + ";";
+        }
+        if (column.horizontalAlign) {
+          style += "text-align: " + column.horizontalAlign + ";";
+        }
+        return style;
+      }
+      return "";
     }
   });
 </script>
