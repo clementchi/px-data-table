@@ -11,6 +11,7 @@
     <link rel="import" href="px-data-table.html" />
     <link rel="import" href="../iron-ajax/iron-ajax.html" />
     <link rel="import" href="../px-theme/px-theme.html"/>
+    <link rel="stylesheet" href="css/px-data-table.css">
   </head>
 
   <body unresolved>
@@ -28,6 +29,23 @@
       <p>Filterable columns and selectable rows.</p>
       <px-data-table filterable selectable table-data="{{data}}"></px-data-table>
 
+
+      <p>Global search on filterable column</p>
+      <div class="flex flex--row--rev">
+        <span>
+          <input type="text" placeholder="table search" class="text-input" value="{{searchText::input}}">
+        </span>
+      </div>
+      <px-data-table filterable selectable enable-global-search global-search-text="{{searchText}}" table-data="{{data}}">
+        <px-data-table-column sortable filterable name="first">
+        </px-data-table-column>
+        <px-data-table-column sortable filterable name="last">
+        </px-data-table-column>
+        <px-data-table-column sortable name="email">
+        </px-data-table-column>
+        <px-data-table-column sortable name="date">
+        </px-data-table-column>
+      </px-data-table>
       <hr>
 
       <p>Display as columns instead of a grid.</p>
@@ -40,10 +58,9 @@
 
       <hr>
 
-      <h3>Server table with single selectable enabled</h3>
+      <h3>Server table enabled</h3>
       <p>Disable client side pagination, sorting and filtering. Listen to "px-data-table-state-changed" event from px-data-table and generate ajax call to server.</p>
-
-      <px-data-table initial-table-state='{"pageSize": 10, "firstItemIndex": 1, "sortedColumn": "first", "descending": false}' server-table single-selectable table-data="{{minidata}}" total-rows-in-server="40" id="server">
+      <px-data-table initial-table-state='{"pageSize": 10, "firstItemIndex": 1, "sortedColumn": "first", "descending": false}' server-table table-data="{{minidata}}" total-rows-in-server="40" id="server">
         <px-data-table-column sortable name="first">
         </px-data-table-column>
         <px-data-table-column sortable name="last">

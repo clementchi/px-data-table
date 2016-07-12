@@ -237,7 +237,6 @@ Events:
 
       /**
        * Use the selectable attribute if the table rows should be able to be selected.
-       * Is not compatible with singleSelectable simultaneously
        *      <px-data-table selectable table-data="{{data}}"></px-data-table>
        *
        * @default false
@@ -248,19 +247,7 @@ Events:
       },
 
       /**
-       * Use the singleSelectable attribute if the table rows should be able to be selected, but only one at a time
-       * Is not compatible with selectable simultaneously
-       *      <px-data-table single-selectable table-data="{{data}}"></px-data-table>
-       *
-       * @default false
-       */
-      singleSelectable: {
-        type: Boolean,
-        value: false
-      },
-      /**
-       * Use the hoverHighlight attribute if the user can hover over a row and highlight that particular row. 
-       * Works with either singleSelectable or selectable, but not both 
+       * Use the hoverHighlight attribute if the user can hover over a row and highlight that particular row.
        *      <px-data-table hover-highlight table-data="{{data}}"></px-data-table>
        *
        * @default false

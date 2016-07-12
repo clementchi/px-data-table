@@ -135,8 +135,11 @@
        <px-data-table initial-table-state='{"pageSize":20, "firstItemIndex": 1, "sortedColumn": "first", "descending": false}' server-table total-rows-in-server="40" id="server">
       </px-data-table>
 
-      <p>Single Selectable test table</p>
-       <px-data-table single-selectable id="singleSelectableTable">
+      <p>Global search test table</p>
+      <px-data-table id="globalSearchTable" enable-global-search table-data="{{data}}">
+        <px-data-table-column filterable name="first"></px-data-table-column>
+        <px-data-table-column name="email"></px-data-table-column>
+        <px-data-table-column filterable name="phone"></px-data-table-column>
       </px-data-table>
 
       <script>

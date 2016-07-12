@@ -182,7 +182,34 @@ Element that defines a columns in a data table.
       minimumColumnWidthClass: {
         type: String,
 
+      },
+
+      /**
+       * minimum width of the column
+       */
+      minWidth:{
+        type: String
+      },
+      /**
+       * maximum width of the column
+       */
+      maxWidth:{
+        type: String
+      },
+      /**
+       * width of the column
+       */
+      width: {
+        type: String
+      },
+      /**
+       * horizontal alignment of cell value
+       */
+      horizontalAlign: {
+        type: String
       }
+
+
 
     },
     validate: function(value){

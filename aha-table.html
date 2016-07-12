@@ -56,13 +56,13 @@
                 <!-- select all checkbox -->
                 <template is="dom-if" if="{{_isSelectAllColumn(column)}}">
                   <span class="flex flex--center">
-                    <input id="selectAllCheckbox" type="checkbox" on-change="_clickSelectAll"/>
+                    <input id="selectAllCheckbox" type="checkbox" checked$="{{_isAllDisplayedRowsChecked(displayedRows)}}" on-change="_clickSelectAll"/>
                   </span>
                 </template>
 
                 <!-- filter entry -->
                 <template is="dom-if" if="{{_isFilterableColumn(column, column.filterable, enableGlobalSearch)}}">
-                  <input placeholder="Filter" class="text-input text-input--filter" type="text" on-keyup="_globalfilter"/>
+                  <input placeholder="Filter" class="text-input text-input--filter" type="text" on-keyup="_filter"/>
                 </template>
 
               </span>
@@ -72,13 +72,13 @@
         <!-- Data rows -->
         <template id="recordList" is="dom-repeat" items="{{displayedRows}}" as="internalRow" strip-whitespace>
 
-          <div class$="{{_getRowClass(internalRow)}}" on-click="_clickRow">
+          <div class$="{{_getRowClass(internalRow)}}">
             <!-- Data cells -->
             <template is="dom-repeat" items="{{meta}}" as="column">
               <template is="dom-if" if="{{_isFalse(column.hide)}}">
                 <!-- selected column checkbox -->
                 <template is="dom-if" if="{{_isEqual(column.type, 'selected')}}">
-                  <span class$="{{_getSelectedCellClass(internalRow._selected, internalRow._highlight)}}">
+                  <span class$="{{_getSelectedCellClass(internalRow._selected, internalRow._highlight)}}" on-click="_clickRow">
                   <template is="dom-if" if="{{internalRow._selectable}}">
                     <span class="flex flex--center flex--middle">
                       <input type="checkbox"
@@ -103,6 +103,10 @@
                                       cell-editable="{{column.editable}}"
                                       cell-validation="{{_getInternalCellValidationStateAt(internalRow, column.name)}}"
                                       column-name="{{column.name}}"
+                                      column-min-width="{{column.minWidth}}"
+                                      column-max-width="{{column.maxWidth}}"
+                                      column-width="{{column.width}}"
+                                      column-horizontal-align="{{column.horizontalAlign}}"
                                       dropdown-max-character-width="{{column.maxColumnCharacterWidth}}"
                                       on-tap="_clickCell">
                   </px-data-table-cell>
@@ -171,11 +175,6 @@
         type: Boolean,
         value: false,
         observer: "_selectableChanged"
-      },
-      //singleSelectable: if table row is selectable one at a time
-      singleSelectable: {
-        type: Boolean,
-        value: false
       },
       //hoverHighlight: Show gray background in row when user hover mouse over a row
       hoverHighlight: {
@@ -461,7 +460,7 @@
       });
 
       if(addedColumns.length > 0) {
-        // need the Selected column if the table is selectable or singleSelectable
+        // need the Selected column if the table is selectable
         if(this.selectable && !this._selectedColumnExists()) {
           // add a selected column if selectable
           this.push('meta', this._generateMetaForColumn("_selected", "selected", true, "Selected (0)"));
@@ -593,7 +592,7 @@
       } else{
         this._internalData = this._refreshInternalData(this.serverTable);
         if (this.serverTable){
-          this._setAllRows(false);
+          this._selectAllDisplayRows(false);
         }
       }
       this._filterSortAndUpdateDisplayedTable();
@@ -748,8 +747,7 @@
           _filtered: (resetDataState || !this._internalData[i] ? false : this._internalData[i]._filtered),
           _selected: (resetDataState || !this._internalData[i] ? false : this._internalData[i]._selected),
           _highlight: (resetDataState || !this._internalData[i] ? {value:false, highlightColor: ''} : this._internalData[i]._highlight),
-          _selectable: this._isRowSelectable(this.selectable, this.data[i]),
-          _singleSelectable: this.singleSelectable        
+          _selectable: this._isRowSelectable(this.selectable, this.data[i])
         });
       }
       return _internalData;
@@ -799,6 +797,19 @@
       }
     },
 
+    _getAllSelectableDisplayedRow: function(){
+      //get all selectable rows;
+      return this.displayedRows.filter(function(row){
+        return row._selectable;
+      });
+    },
+
+    _getAllSelectedDisplayedRow: function(){
+      //get al selected display rows;
+      return this.displayedRows.filter(function(row){
+        return row._selected;
+      });
+    },
     /******* Update Displayed rows when major changes ****/
 
     _updateDisplayedRows: function() {
@@ -819,6 +830,22 @@
 
       } else if (this.filteredSortedData !== undefined && this.filteredSortedData !== null && this.hidePaginationControl) {
         this.set('displayedRows', this.filteredSortedData);
+      }
+
+      //reset selected row counter when page change or sort change
+      this._setAllRows(false);
+    },
+
+    _isAllDisplayedRowsChecked: function(displayedRows){
+      var selectableDisplayedRows = this._getAllSelectableDisplayedRow();
+      var selectedDisplayedRows = this._getAllSelectedDisplayedRow();
+
+      this.set('meta.0.label', "Selected (" + selectedDisplayedRows.length+ ")");
+      if ((selectedDisplayedRows.length > 0) && (selectedDisplayedRows.length === selectableDisplayedRows.length)){
+        this._setSelectAllCheckbox(true);
+      }
+      else {
+        this._setSelectAllCheckbox(false);
       }
     },
 
@@ -1193,18 +1220,13 @@
           detail = {"row": row, "column": column};
       this.fire('px-row-click', detail); // fire the event after it is marked selected
 
-      //if singleSelectable is enabled and no other rows were selected before
-      if (this.singleSelectable){
-        this._singleSelectRow(row, this.$.recordList.indexForElement(evt.currentTarget));
-      }
-
       if(this.selectable && row._selectable) {
-        this._multiSelectRow(row, this.$.recordList.indexForElement(evt.currentTarget));
-        var selectableInternalData = this._internalData.filter(function(row){
+        this._selectRow(row, this.$.recordList.indexForElement(evt.currentTarget));
+        var selectableDisplayRows = this.displayedRows.filter(function(row){
           return row._selectable;
         });
 
-        if (selectableInternalData.length && this.selectedRows.length === selectableInternalData.length) {
+        if (selectableDisplayRows.length && this.selectedRows.length === selectableDisplayRows.length) {
           this._setSelectAllCheckbox(true);
         }
         else {
@@ -1223,12 +1245,13 @@
 
       this.fire('px-cell-click', detail); // fire the event after it is marked selected
     },
+
     _clickSelectAll: function(e) {
       if(e.target.checked) {
-        this._setAllRows(true); // selected
+        this._selectAllDisplayRows(true); // selected
       }
       else {
-        this._setAllRows(false); // unselected
+        this._selectAllDisplayRows(false); // unselected
       }
     },
 
@@ -1239,6 +1262,38 @@
       selectAllCheckbox? selectAllCheckbox.checked = isSelectedAll : '';
     },
 
+    _selectAllDisplayRows: function(isSelected) {
+      var i,len;
+      // set display rows selected/unselected
+      for(i = 0, len = this.displayedRows.length; i < len; i++) {
+        if (this.displayedRows[i]._selectable){
+          this._setInternalDataAt(this.displayedRows[i], '_selected', isSelected);
+        }
+      }
+
+      // notify viewing rows of change
+      for(i = 0, len = this.displayedRows.length; i < len; i++) {
+        this.notifyPath('displayedRows.' + i + '._selected', isSelected);
+      }
+
+      // remove everything from user-facing selectedRows property
+      this.splice('selectedRows', 0, this.selectedRows.length);
+      if(isSelected) {
+        // add everything to selectedRows property
+        for(i = 0, len = this.displayedRows.length; i < len; i++) {
+          if (this.displayedRows[i]._selected) {
+            this.push('selectedRows', this.displayedRows[i]);
+          }
+        }
+      }
+      else {
+        this._setSelectAllCheckbox(false);
+      }
+
+      this.set('meta.0.label', "Selected (" + this.selectedRows.length+ ")");
+
+      this.fire('px-select-all-click', this.selectedRows);
+    },
     _setAllRows: function(isSelected) {
       var i,
           len;
@@ -1276,33 +1331,7 @@
 
     },
 
-    _singleSelectRow: function(row, indexInDisplayedRows) {
-
-      this.fire('before-select', row);
-      // this.notifyPath('displayedRows.' + indexInDisplayedRows + '._selected', selectedRows[0]._selected);
-      this.splice('selectedRows', 0, this.selectedRows.length);
-      if (this._previousRowSelectedIndex || this._previousRowSelectedIndex === 0) {
-        this._selectedSingleRow._selected=false;
-        this.notifyPath('displayedRows.' + this._previousRowSelectedIndex + '._selected', this._selectedSingleRow._selected);       
-      }
-      if (this._previousRowSelectedIndex !== indexInDisplayedRows){
-        row._selected=true;
-        this.push('selectedRows', row);
-        this.notifyPath('displayedRows.' + indexInDisplayedRows + '._selected', row._selected);
-        this._previousRowSelectedIndex = indexInDisplayedRows;   
-        this.set('_selectedSingleRow',row); 
-      }
-      else {
-        row._selected=false;
-        this.notifyPath('displayedRows.' + indexInDisplayedRows + '._selected', row._selected);
-        this._previousRowSelectedIndex = null;   
-        this.set('_selectedSingleRow',null); 
-      }
-
-      this.fire('after-select', row);
-    },
-
-    _multiSelectRow: function(row, indexInDisplayedRows) {
+    _selectRow: function(row, indexInDisplayedRows) {
 
       this.fire('before-select', row);
 

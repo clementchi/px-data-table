@@ -1064,6 +1064,7 @@ window.tableTest = {
 document.addEventListener("WebComponentsReady", function() {
   table1Fixture = document.getElementById('table1');
   table1Fixture.tableData = data;
+
   table2Fixture = document.getElementById('table2');
   table2Fixture.tableData = minidata;
 
@@ -1094,8 +1095,8 @@ document.addEventListener("WebComponentsReady", function() {
   customMultiSelectTest = document.getElementById('custom-multi-select-test');
   customMultiSelectTest.tableData = minidata;
 
-  singleSelectableTableTest=document.getElementById('singleSelectableTable');
-  singleSelectableTableTest.tableData=dataTest;
+  globalSearchTable = document.getElementById('globalSearchTable');
+  globalSearchTable.tableData = minidata;
 
   runTests();
 });
@@ -1699,50 +1700,6 @@ function runTests() {
       });
     });
 
-    suite('single-selectable table test', function(){
-      var fixture;
-      suiteSetup(function(){
-        fixture = document.querySelector('#singleSelectableTable');
-      });
-      test('should not have checkboxes on each row and select all checkbox', function(){
-        //check for the selectall checkbox and per row checkbox
-        var selectAllCheckbox=fixture.querySelector('#selectAllCheckbox');
-        var checkboxForRow=fixture.querySelector('input[type="checkbox"]');
-
-        assert.isNull(selectAllCheckbox, 'All checkbox should be null');
-        assert.isNull(checkboxForRow, 'There should be no exists of checkbox');
-      });
-
-      test('should only do single row select', function(done){
-        var allRows=fixture.querySelectorAll('#scrollBodyTableContainer > .rows');
-        //click on different rows 
-        allRows[0].click();
-        allRows[1].click();
-        allRows[2].click();
-        flush(function(){
-          assert.equal(fixture.selectedRows.length,1);
-          done();
-        });
-      });
-
-      test('should remember selectedRows after page switching', function(done){
-        var allRows=fixture.querySelectorAll('#scrollBodyTableContainer > .rows');
-        var page2Selector = '#pagination .paging.style-scope.px-pagination > span > :nth-child(2)';
-        var page2Button = fixture.querySelector(page2Selector);
-        //click on a row
-        allRows[4].click();
-        flush(function(){
-          assert.equal(fixture.selectedRows.length,1);
-          page2Button.click();
-          //click next page
-          flush(function(){
-            assert.equal(fixture.selectedRows.length,1);
-            done();
-          });
-        });
-      });
-    });
-
     suite('server table test',function(){
       //helper functions for cleaner code
       var eventData;
@@ -1827,5 +1784,43 @@ function runTests() {
           done();
         },10);
       });
+  });
+
+  suite('global search test', function(){
+    var fixture;
+    suiteSetup(function(){
+      fixture = document.querySelector('#globalSearchTable');
+    });
+
+    test('should filter rows that do not match the string', function(done){
+      fixture.globalSearchText = 'Valentine';
+      flush(function(){
+        var displayRows=fixture.querySelectorAll('.rows');
+        assert.equal(displayRows.length,1);
+        assert.equal(displayRows[0].querySelector('px-data-table-cell #cellvalue').textContent.trim(),'Valentine');
+        done();
+      });
+    });
+
+    test('should not filter when empty string is provided', function(done){
+      fixture.globalSearchText = '';
+      flush(function(){
+        var displayRows=fixture.querySelectorAll('.rows');
+        assert.equal(displayRows.length,10);
+        assert.equal(displayRows[0].querySelector('px-data-table-cell #cellvalue').textContent.trim(),'Valentine');
+        assert.equal(displayRows[9].querySelector('px-data-table-cell #cellvalue').textContent.trim(),'Jane');
+        done();
+      });
+    });
+
+    test('should not filter on not filterable column', function(done){
+      fixture.globalSearchText = 'valentinemeyer@scentric.com';
+      flush(function(){
+        var displayRows=fixture.querySelectorAll('.rows');
+        assert.equal(displayRows.length,0);
+        done();
+      });
+    });
+
   });
 }

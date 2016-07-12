@@ -8,7 +8,7 @@
 <dom-module id="px-data-table-cell">
   <link rel="import" type="css" href="css/px-data-table-cell.css"/>
   <template>
-    <span class$="{{_getReaderClass(_editing)}}" on-mouseover='onCellHovered' on-mouseout='onCellUnHovered'>
+    <span style$="{{_getCustomColumnStyle()}}" class$="{{_getReaderClass(_editing)}}" on-mouseover='onCellHovered' on-mouseout='onCellUnHovered'>
 
       <!-- in place editing template -->
       <px-edit-cell id="celledit" class$="{{_getEditCellClass(_editing)}}">
@@ -381,6 +381,28 @@
         this.toggleClass('cell--value__highlight--color__high', false);
         this.toggleClass('cell--value__highlight--color__medium', false);
         this.toggleClass('cell--value__highlight--color__low', false);
+      },
+      _getCustomColumnStyle: function() {
+        if (this.minWidth || this.maxWidth || this.width || this.horizontalAlign) {
+          var style = "white-space: normal; word-wrap:break-word;";
+          if (this.maxwidth) {
+            style += "max-width: " + this.maxwidth + ";";
+          }
+          if (this.minwidth) {
+            style += "min-width: " + this.minwidth + ";";
+          } else {
+            // set min-width to 100% if it's not set
+            style += "min-width: 100%;";
+          }
+          if (this.width) {
+            style += "width: " + this.width + ";";
+          }
+          if (this.horizontalAlign) {
+            style += "text-align: " + this.horizontalAlign + ";";
+          }
+          return style;
+        }
+        return "";
       }
     });
   </script>
