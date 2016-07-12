@@ -160,16 +160,6 @@
         },
         notify: true
       },
-      //selectedSingleRow: The selected row will be referenced here, only accept one selected row
-      _selectedSingleRow: {
-        type: Object,
-        notify: true
-      },
-      //previousRowSelectedIndex: Used for single selectable to remember the previous row index clicked
-      _previousRowSelectedIndex: {
-           type: Number,
-            notify: true
-      },
       //selectable: if table row is selectable
       selectable: {
         type: Boolean,
@@ -832,8 +822,10 @@
         this.set('displayedRows', this.filteredSortedData);
       }
 
-      //reset selected row counter when page change or sort change
-      this._setAllRows(false);
+      if (this.selectable){
+        //reset selected row counter when page change or sort change
+        this._setAllRows(false);
+      }
     },
 
     _isAllDisplayedRowsChecked: function(displayedRows){
