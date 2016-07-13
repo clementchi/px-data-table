@@ -1271,7 +1271,7 @@
         // add everything to selectedRows property
         for(i = 0, len = this.displayedRows.length; i < len; i++) {
           if (this.displayedRows[i]._selected) {
-            this.push('selectedRows', this.displayedRows[i]);
+            this.push('selectedRows', this._sanitizeDisplayRow(this.displayedRows[i]));
           }
         }
       }
@@ -1282,6 +1282,18 @@
       this.set('meta.0.label', "Selected (" + this.selectedRows.length+ ")");
 
       this.fire('px-select-all-click', this.selectedRows);
+    },
+    /**
+     * return rows array without internal properties
+     * mainly for cleaning displayedRow for selectedRow
+     */
+    _sanitizeDisplayRow: function(displayedRow){
+      var newRow = {};
+      var row = displayedRow.row;
+      for (col in row){
+        newRow[col] = row[col].value
+      }
+      return newRow;
     },
     _setAllRows: function(isSelected) {
       var i,
@@ -1306,7 +1318,7 @@
         // add everything to selectedRows property
         for(i = 0, len = this._internalData.length; i < len; i++) {
           if (this._internalData[i]._selectable) {
-            this.push('selectedRows', this._internalData[i]);
+            this.push('selectedRows', this._sanitizeDisplayRow(this._internalData[i]));
           }
         }
       }
@@ -1322,7 +1334,7 @@
 
     _selectRow: function(row, indexInDisplayedRows) {
 
-      this.fire('before-select', row);
+      this.fire('before-select', this._sanitizeDisplayRow(row));
 
       if(this.selectedRows.indexOf(row) > -1) {
         row._selected = false;
@@ -1332,11 +1344,11 @@
       else {
         row._selected = true;
         this.notifyPath('displayedRows.' + indexInDisplayedRows + '._selected', row._selected);
-        this.push('selectedRows', row);
+        this.push('selectedRows', this._sanitizeDisplayRow(row));
       }
       this.set('meta.0.label', "Selected (" + this.selectedRows.length+ ")");
 
-      this.fire('after-select', row);
+      this.fire('after-select', this._sanitizeDisplayRow(row));
     },
 
     /******** Drag and drop ********/
