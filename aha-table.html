@@ -400,13 +400,10 @@
      * Set initial table state when serverTable flag is used
      */
     _initialTableStateChanged: function(value){
-      if (this.serverTable){
-        console.log('setting initial table State', value);
-        this.$.pagination.set('pageSize', value.pageSize);
-        this.$.pagination.goToPageNumber(Math.ceil(value.firstItemIndex/value.pageSize));
-        this.set('sortedColumn', value.sortedColumn);
-        this.set('descending', value.descending);
-      }
+      value.pageSize? this.$.pagination.set('pageSize', value.pageSize) : '';
+      (value.firstItemIndex && value.pageSize)? this.$.pagination.goToPageNumber(Math.ceil(value.firstItemIndex/value.pageSize)) : '';
+      value.sortedColumn? this.set('sortedColumn', value.sortedColumn) : '';
+      value.descending? this.set('descending', value.descending) : '';
     },
 
     _totalRowsInServerChanged: function(rows) {
