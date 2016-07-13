@@ -1333,22 +1333,30 @@
     },
 
     _selectRow: function(row, indexInDisplayedRows) {
+      var sanitizedRow = this._sanitizeDisplayRow(row);
+      this.fire('before-select', sanitizedRow);
 
-      this.fire('before-select', this._sanitizeDisplayRow(row));
+      var found = false;
+      for (var rowIndex=0; rowIndex < this.selectedRows.length; rowIndex ++){
+        if (JSON.stringify(this.selectedRows[rowIndex]) === JSON.stringify(sanitizedRow)){
+          found = true;
+          break;
+        }
+      }
 
-      if(this.selectedRows.indexOf(row) > -1) {
+      if(found) {
         row._selected = false;
         this.notifyPath('displayedRows.' + indexInDisplayedRows + '._selected', row._selected);
-        this.splice('selectedRows', this.selectedRows.indexOf(row), 1);
+        this.splice('selectedRows', rowIndex, 1);
       }
       else {
         row._selected = true;
         this.notifyPath('displayedRows.' + indexInDisplayedRows + '._selected', row._selected);
-        this.push('selectedRows', this._sanitizeDisplayRow(row));
+        this.push('selectedRows', sanitizedRow);
       }
       this.set('meta.0.label', "Selected (" + this.selectedRows.length+ ")");
 
-      this.fire('after-select', this._sanitizeDisplayRow(row));
+      this.fire('after-select', sanitizedRow);
     },
 
     /******** Drag and drop ********/
