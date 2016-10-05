@@ -9,11 +9,11 @@ Element that provides pagination.
 
 @demo demo.html
 -->
+<link rel="import" href="css/aha-table-styles.html">
 <dom-module id="px-pagination">
-  <link rel="import" type="css" href="css/aha-table.css"/>
-
   <template>
-
+    <style include="aha-table-styles"></style>
+    <style include="px-theme-styles"></style>
 			<span class="pagesize">
 				<span class="u-mr--">{{pagesizetitle}}</span>
 				<select id="pageSizeSelect" on-change="_changeDropDown">
@@ -107,8 +107,25 @@ Element that provides pagination.
       return item === details;
     },
 
+    _updatePageSize: function(size) {
+      var sizelist = [10, 20, 50, 100];
+      var index = sizelist.indexOf(size);
+      var parentElem = this.$.pageSizeSelect,
+              optionList = Polymer.dom(parentElem).querySelectorAll("option");
+      optionList.forEach(function(option) {
+        if(parseInt(option.value) === parseInt(size)) {
+          option.setAttribute('selected', '');
+          parentElem.selectedIndex = parseInt(index);
+        } else {
+          option.removeAttribute('selected');
+        }
+      });
+      //this._setPageSize(size);
+      this._goBackToFirstPage();
+    },
+
     _pageSizeChanged: function(){
-      this.set('pageSize', this.pageSize);
+      this._updatePageSize(this.pageSize);
     },
 
     _numberOfItemsChanged: function(){
@@ -152,6 +169,15 @@ Element that provides pagination.
       if(this.currentPage < this.pageCount) {
         this.goToPageNumber(this.currentPage + 1);
       }
+    },
+
+    /**
+     * Set page size public interface.
+     * 
+     * Set Page size, trigger update of table, update combobox.
+     */
+    setPageSize: function(size) {
+      this.set('pageSize', size);
     },
 
     _changeDropDown: function(e) {

@@ -1,4 +1,6 @@
-var table1Fixture, table2Fixture, table3Fixture, table4Fixture, table5Fixture, table6Fixture, dropdownFixture, filtertest, serverTest;
+var table1Fixture, table2Fixture, table3Fixture, table4Fixture, table5Fixture, table6Fixture, dropdownFixture, filtertest, resetDataFixture, additionalDataFixture;
+var serverTest, multiSelectTest, customMultiSelectTest, globalSearchTable;
+
 var getStyle = function (el, style){
   return window.getComputedStyle( el, null ).getPropertyValue( style );
 };
@@ -482,6 +484,83 @@ var data =
   {
     "index": 25,
     "name": "Graciela Orr",
+    "first": "Sharp",
+    "last": "Lindsay",
+    "image": "https://s3.amazonaws.com/uifaces/faces/twitter/thibaut_re/73.jpg",
+    "boolean": true,
+    "guid": "0ea67b0a-5ea7-4e07-8d06-48b6e2a00c6e",
+    "integer": 39,
+    "date": "Mon May 25 1970 21:04:46 GMT-0700 (PDT)",
+    "address": "2 Tech Place",
+    "city": "Kraemer",
+    "state": "Maryland",
+    "zip": 24019,
+    "country": "Saudi Arabia",
+    "email": "sharplindsay@scentric.com",
+    "phone": "(852) 538-3232",
+    "color": "rgb(218,74,95)"
+  }
+];
+var additionalData = [  {
+  "index": 26,
+  "name": "Cooley Macdonald Two",
+  "first": "Aida",
+  "last": "Hurley",
+  "image": "https://s3.amazonaws.com/uifaces/faces/twitter/markwienands/73.jpg",
+  "boolean": false,
+  "guid": "466a665b-b7b6-4eae-b404-e9b5a8d1641d",
+  "integer": 20,
+  "date": "Sun Jan 05 2014 15:48:57 GMT-0800 (PST)",
+  "address": "4 Hall Street",
+  "city": "Stouchsburg",
+  "state": "District Of Columbia",
+  "zip": 32399,
+  "country": "Chile",
+  "email": "aidahurley@scentric.com",
+  "phone": "(975) 451-3272",
+  "color": "rgb(119,239,85)"
+},
+  {
+    "index": 27,
+    "name": "Snow Blankenship Two",
+    "first": "Mccormick",
+    "last": "Jensen",
+    "image": "https://s3.amazonaws.com/uifaces/faces/twitter/menghe/73.jpg",
+    "boolean": false,
+    "guid": "961f5da2-2479-4f45-9132-9e89a8bc32e4",
+    "integer": 70,
+    "date": "Tue Jan 22 1974 01:18:15 GMT-0700 (PDT)",
+    "address": "3 Lewis Place",
+    "city": "Elizaville",
+    "state": "Virgin Islands",
+    "zip": 32784,
+    "country": "Norfolk Island",
+    "email": "mccormickjensen@scentric.com",
+    "phone": "(961) 443-3343",
+    "color": "rgb(204,198,130)"
+  },
+  {
+    "index": 28,
+    "name": "Gabriela Brock Two",
+    "first": "Ramona",
+    "last": "Meyers",
+    "image": "https://s3.amazonaws.com/uifaces/faces/twitter/heyanata/73.jpg",
+    "boolean": false,
+    "guid": "07133f92-9308-420e-ae7b-e5ecd657aa85",
+    "integer": 76,
+    "date": "Sat Sep 15 1984 07:22:38 GMT-0700 (PDT)",
+    "address": "3 Rodney Street",
+    "city": "Orin",
+    "state": "Puerto Rico",
+    "zip": 60446,
+    "country": "Japan",
+    "email": "ramonameyers@scentric.com",
+    "phone": "(839) 591-3993",
+    "color": "rgb(236,222,59)"
+  },
+  {
+    "index": 29,
+    "name": "Graciela Orr Two",
     "first": "Sharp",
     "last": "Lindsay",
     "image": "https://s3.amazonaws.com/uifaces/faces/twitter/thibaut_re/73.jpg",
@@ -1056,11 +1135,13 @@ var minidata =
     "color": "<button class='btn' style='color:rgb(164,84,221);'>8-bit migas</button>"
   }
 ];
+
 window.tableTest = {
   customSelectableRow : function(row){
     return row.email === 'silvaalexander@gmail.com';
   }
 };
+
 document.addEventListener("WebComponentsReady", function() {
   table1Fixture = document.getElementById('table1');
   table1Fixture.tableData = data;
@@ -1085,6 +1166,12 @@ document.addEventListener("WebComponentsReady", function() {
 
   filtertest = document.getElementById('filtertest');
   filtertest.tableData = minidata;
+
+  resetDataFixture = document.getElementById('resetTableWithNewData');
+  resetDataFixture.tableData = minidata;
+
+  additionalDataFixture = document.getElementById('updateTableWithAdditionalData');
+  additionalDataFixture.tableData = data;
 
   serverTest = document.getElementById('server');
   serverTest.tableData = dataTest;
@@ -1128,9 +1215,7 @@ function runTests() {
      assert.isTrue(document.getElementById('server') !== null);
    });
 
-
    // Spot checks for correct table structure, cell values and control states
-
    test('There should be 17 columns in the table1 fixture', function() {
 
      // Select a div corresponding to a data row in the table
@@ -1142,28 +1227,33 @@ function runTests() {
      // There should be 17 such spans
      assert.equal(columnCount, 17);
    });
+
    test('Value of 5th data row 2nd column of first table should be "Rita Lopez"', function() {
      var tb = Polymer.dom(table1Fixture.root).querySelector('aha-table'),
          cell = Polymer.dom(tb.root).querySelectorAll('.aha-name-td')[4];
      assert.include(cell.textContent, 'Rita Lopez');
    });
+
    test('Row count for first table should be 26', function() {
      var fixture = document.getElementById('table1');
      var selector = '.summary.style-scope.px-pagination :nth-child(4)';
      var span = fixture.querySelector(selector);
      assert.equal(span.innerHTML, '26');
    });
+
    // Spot checks for correct values in table cells and controls'
    test('First Name displays only first 10 characters  if length of the text is greater than 10 characters and elipse at the right', function() {
      var tb = Polymer.dom(table5Fixture.root).querySelector('aha-table'),
          cell = Polymer.dom(tb.root).querySelectorAll('.aha-first-td')[0];
      assert.include(cell.textContent, 'Isabel lon…');
    });
+
    test('Email displays only last 10 characters displayed if length of the text is greater than 10 characters', function() {
      var selector = '#dataTable > div.scroll-body div:nth-child(3) > .aha-image-td';
      var span = table5Fixture.querySelector(selector);
      assert.equal(span.innerHTML.indexOf('…/twitter/enda/73.jpg') >= 0, true);
    });
+
    test('Address displays total 10 characters with ellipse in the center if length of the text is greater than 10 characters', function() {
      var selector = '#dataTable > div.scroll-body div:nth-child(3) > .aha-address-td';
      var span = table5Fixture.querySelector(selector);
@@ -1318,6 +1408,7 @@ function runTests() {
      assert.equal(getStyle(dropdown, 'display'), 'block');
      done();
    });
+
    test('items passed into dropdown are the ones shown', function(done){
      var tb = Polymer.dom(dropdownFixture.root).querySelector('aha-table'),
          px_dropdown_cell = Polymer.dom(tb.root).querySelector('.td__dropdown'),
@@ -1422,7 +1513,7 @@ function runTests() {
          done();
        });
      });
-   });
+ });
 
  suite('Table data mutations tests', function(){
    //uses table3Fixture - no other tests using this. Adding/removing rows could unsettle other tests if they were using this fixture.
@@ -1621,9 +1712,9 @@ function runTests() {
        });
      });
 
-   });
+ });
 
-    suite('multi-selectable table test', function(){
+  suite('multi-selectable table test', function(){
       var fixture;
       suiteSetup(function(){
         fixture = document.querySelector('#multi-select-test');
@@ -1697,10 +1788,68 @@ function runTests() {
           assert.equal(fixtureCustom.selectedRows.length, 1);
           done();
         });
+    });
+  });
+
+  suite('Unit Tests for updating the data for Data Table', function () {
+
+    test('Setting table-data to different set of data removes all rows from table and sets the new data', function (done) {
+      var tb = Polymer.dom(resetDataFixture.root).querySelector('aha-table');
+      var tableData = resetDataFixture.tableData;
+      assert.equal(Polymer.dom(tb.root).querySelectorAll('.rows').length, 10);
+
+      resetDataFixture.tableData = [];
+      flush(function () {
+        assert.equal(Polymer.dom(tb.root).querySelectorAll('.rows').length, 0);
+        resetDataFixture.tableData = data;
+        flush(function () {
+          assert.equal(Polymer.dom(tb.root).querySelectorAll('.rows').length, 26);
+          done();
+        });
       });
+
     });
 
-    suite('server table test',function(){
+    test('Adding another set of data to the table-data', function (done) {
+      var tb = Polymer.dom(additionalDataFixture.root).querySelector('aha-table');
+      var tableData = additionalDataFixture.tableData;
+      assert.equal(Polymer.dom(tb.root).querySelectorAll('.rows').length, 26);
+
+      additionalDataFixture.tableData = tableData.concat(additionalData);
+      flush(function () {
+        assert.equal(Polymer.dom(tb.root).querySelectorAll('.rows').length, 30);
+        done();
+      });
+    });
+  });
+
+  suite('Unit Tests for page size property', function () {
+
+    test('Default pagination size is 10', function() {
+      assert.equal(table1Fixture.pageSize, 10, 'Default page size should be 10 rows.');
+    });
+
+    test('Default rows displayed size is 10', function() {
+      var tb = Polymer.dom(table1Fixture.root).querySelector('aha-table'),
+        rowCount = Polymer.dom(tb.root).querySelectorAll('.rows').length;
+      assert.equal(rowCount, 10, 'Default rows displayed should be 10 rows.');
+    });
+
+    test('Switching pageSize property to 20 should make table re-render', function(done) {
+      var tb = Polymer.dom(table1Fixture.root).querySelector('aha-table'),
+        rowCount = Polymer.dom(tb.root).querySelectorAll('.rows').length;
+      assert.equal(rowCount, 10, 'Default rows displayed should be 10 rows.');
+
+      table1Fixture.pageSize = 20;
+      flush(function() {
+        var newRowCount = Polymer.dom(tb.root).querySelectorAll('.rows').length;
+        assert.equal(newRowCount, 20, 'Default rows displayed should be 20 rows.');
+        done();
+      });
+    });
+  });
+
+  suite('server table test',function(){
       //helper functions for cleaner code
       var eventData;
       document.querySelector('#server').addEventListener('px-data-table-state-changed', function(e){
@@ -1821,6 +1970,5 @@ function runTests() {
         done();
       });
     });
-
   });
 }

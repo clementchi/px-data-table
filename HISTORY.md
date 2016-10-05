@@ -1,3 +1,51 @@
+v1.13.3
+================
+* Hide scrollbar if not needed
+
+v1.13.2
+================
+* Remove gruntfile
+
+v1.13.1
+================
+* Fix for column chooser and long column names
+
+v1.13.0
+================
+* Move to gulp and style modules
+
+v1.12.7
+================
+* Added wrapping for long column headers
+
+v1.12.6
+================
+* added support for parent-name in demo-snippet
+
+v1.12.5
+================
+* Update ghp to include secondary demo pages
+
+v1.12.4
+================
+* Added new demo pages
+
+v1.12.3
+================
+* added image to readme
+
+v1.12.2
+================
+* vulcanized old demo page as well.
+
+v1.12.1
+================
+* added vulcanize to demo page
+
+v1.12.0
+================
+* Fixes to allow re-cycling of existing data table element with new data
+
 v1.11.1
 ================
 * Fix bug that when table was selectable but not filterable, select all button (and row) were hidden.

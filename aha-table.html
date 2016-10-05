@@ -12,15 +12,18 @@
 <link rel="import" href="px-pagination.html">
 <link rel="import" href="px-data-table-cell.html">
 <link rel="import" href="../polymer-font-awesome/polymer-font-awesome.html">
+<link rel="import" href="css/px-data-table-styles.html">
 
 <dom-module id="aha-table">
-  <link rel="import" type="css" href="css/aha-table.css"/>
   <template>
+    <style include="aha-table-styles"></style>
+    <style include="px-theme-styles"></style>
+
     <content id="columndefs"></content>
     <template is="dom-if" if="{{showColumnChooser}}">
-      <div class="flex columnChooser">
+      <div class="flex columnChooser u-mb-">
         <px-dropdown display-value="Show/Hide Column">
-          <px-dropdown-content class="px-dropdown-content" checkbox-mode="true" max-cont-character-width="16" items='{{_columnChooserItems}}'>
+          <px-dropdown-content class="px-dropdown-content" checkbox-mode="true" items='{{_columnChooserItems}}'>
           </px-dropdown-content>
         </px-dropdown>
       </div>
@@ -72,7 +75,7 @@
         <!-- Data rows -->
         <template id="recordList" is="dom-repeat" items="{{displayedRows}}" as="internalRow" strip-whitespace>
 
-          <div class$="{{_getRowClass(internalRow)}}">
+          <div class$="{{_getRowClass(internalRow,striped)}}">
             <!-- Data cells -->
             <template is="dom-repeat" items="{{meta}}" as="column">
               <template is="dom-if" if="{{_isFalse(column.hide)}}">
@@ -229,6 +232,18 @@
       descending: {
         type: Boolean,
         value: false
+      },
+      /**
+       * Property to set the page size instead of the default of 10.
+       *
+       *      <px-data-table page-size="50" table-data="{{data}}"></px-data-table>
+       *
+       * @default 10
+       */
+      pageSize: {
+        type: Number,
+        value: 10,
+        observer : '_setPageSize'
       },
       /**
        * Property to set the visibility of the table pagination controls.
@@ -569,6 +584,7 @@
 
     _dataChanged: function(changeRec) {
       if(this.data === undefined || this.data === null || (!this._isAttached && changeRec.base.length === 0)) {
+        this._internalData = [];
         return;
       }
 
@@ -576,7 +592,7 @@
       //debounce it as well
       if(!this._isAttached) {
         var _this = this;
-        this.debounce(function() {
+        this.debounce('attach', function() {
           _this._dataChanged(changeRec);
         }, 10);
         return;
@@ -728,7 +744,8 @@
           len;
       for(i = 0, len = this.data.length; i < len; i++) {
         var thisObj = this.data[i],
-            cellDataObj = {dataIndex: i };
+            cellDataObj = {dataIndex: i },
+            resetDataFlag = resetDataState || i >= this._internalData.length;
         for ( var key in thisObj ) {
           if ( Object.prototype.hasOwnProperty.call( thisObj, key ) ) {
             cellDataObj[key] = {};
@@ -751,7 +768,6 @@
         });
       }
       return _internalData;
-
     },
 
     _initializeInternalData: function() {
@@ -812,6 +828,10 @@
     },
     /******* Update Displayed rows when major changes ****/
 
+    _setPageSize: function() {
+      this.$.pagination.setPageSize(this.pageSize);
+    },
+    
     _updateDisplayedRows: function() {
       var fromPage,
           to;
@@ -1697,7 +1717,7 @@
     },
     /******** Display table helpers (classes, dom-if functions, etc.) *************/
 
-    _getRowClass: function(row) {
+    _getRowClass: function(row,striped) {
       return ['tr', 'rows',
         this.striped ? 'striped' : '',
         this.hoverHighlight ? 'hoverHighlight' : '' 

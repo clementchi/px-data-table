@@ -1124,9 +1124,6 @@ label {
   -webkit-justify-content: space-between;
       -ms-flex-pack: justify;
           justify-content: space-between; }
-          
-.hoverHighlight:hover {
-    background-color: #E4E4EA;}          
 
 .aha-_selected-th {
   width: 100px; }

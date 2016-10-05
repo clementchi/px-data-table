@@ -94,10 +94,12 @@ Events:
 
 @demo demo.html
 -->
-<dom-module id="px-data-table">
-  <link rel="import" type="css" href="css/px-data-table.css"/>
+<link rel="import" href="css/px-data-table-styles.html">
 
+<dom-module id="px-data-table">
   <template>
+    <style include="px-data-table-styles"></style>
+    <style include="px-theme-styles"></style>
     <div class="flex">
       <aha-table filterable="{{filterable}}"
                  striped="{{striped}}"
@@ -108,6 +110,7 @@ Events:
                  selected-rows="{{selectedRows}}"
                  hover-highlight="{{hoverHighlight}}"
                  meta="{{meta}}"
+                 page-size="{{pageSize}}"
                  hide-pagination-control="{{hidePaginationControl}}"
                  show-column-chooser="{{showColumnChooser}}"
                  enable-column-reorder="{{enableColumnReorder}}"
@@ -267,6 +270,18 @@ Events:
         type: Boolean,
         value: false
       },
+      /**
+       * Property to set the table page size.
+       *
+       *      <px-data-table page-size="50" table-data="{{data}}"></px-data-table>
+       *
+       * @default 10
+       */
+      pageSize: {
+        type: Number,
+        value: 10
+      },
+
       /**
        * Selected rows in the data table setup for binding.
        * Note: In server-table mode, SelectedRows will be emptied if clicked on next page.
